@@ -1,0 +1,45 @@
+1. no funcs
+2. basic arithmetic
+3. ints, strings, chars, bools, lists, dicts
+- type inference
+- range operator ..
+4. basic pattern matching
+- multi-choice: |
+- range: ..
+- named pattern: {name}@{value}
+5. if/else
+6. builtin-functions for ETL, functions passed in are denoted code-blocks:
+-- parallel keyword?
+- read stdin
+- read csv
+- output csv
+- output stdout
+- map
+- filter
+- zip
+- foldl
+- foldr
+- foreach
+- range
+7. list operators: ++, ===, [ ]
+8. REPL
+- args:
+     * retl <-d> => run the Retl REPL, optional debug mode
+     * retl <-d> <-f> <file_name> => optional debug mode, run file
+- steps:
+    1. read strings, multi-line denoted by \
+    2. scan, parse, type check with environment from REPL
+    3. run new code
+    4. add to env
+9. lazy evaluation
+10. strong, static typing
+
+Structure:
+ReplRunner
+Logger
+Scanner
+Parser
+Types (impl Type)
+SemanticAnalyzer
+Values (impl Value)
+Interpreter

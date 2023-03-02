@@ -1,7 +1,13 @@
+mod scanner;
+mod defs;
+mod utils;
+
 use std::error::Error;
 use clap::Parser;
 use std::path::PathBuf;
 use std::fs;
+
+use scanner::scanner::Scanner;
 
 /// RETL script and REPL runner
 #[derive(Debug, Parser)]
@@ -34,6 +40,7 @@ fn read_retl_file(path_buf: &PathBuf) -> Result<String, Box<dyn Error>> {
 
 fn run_retl(script: &String, debug: bool) -> Result<(), Box<dyn Error>> {
     println!("{}", script);
+
     Ok(())
 }
 

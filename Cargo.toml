@@ -1,5 +1,5 @@
 [package]
-name = "Retl"
+name = "retl"
 version = "0.1.0"
 authors = ["Spencer Huston <sjh91910@gmail.com>"]
 edition = "2018"

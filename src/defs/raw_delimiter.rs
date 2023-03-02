@@ -1,0 +1,57 @@
+pub enum RawDelimiter {
+    Colon,
+    Equal,
+    Backslash,
+    Semicolon,
+    Period,
+    Comma,
+    Plus,
+    Hyphen,
+    Star,
+    ForwardSlash,
+    Percent,
+    Ampersand,
+    Pipe,
+    Exclamation,
+    ArrowLeft,
+    ArrowRight,
+    BracketLeft,
+    BracketRight,
+    BraceLeft,
+    BraceRight,
+    ParenLeft,
+    ParenRight,
+    At,
+    Underscore
+}
+
+impl RawDelimiter {
+    fn val(&self) -> &'static str {
+        match self {
+            RawDelimiter::Colon => ":",
+            RawDelimiter::Equal => "=",
+            RawDelimiter::Backslash => "\\",
+            RawDelimiter::Semicolon => ";",
+            RawDelimiter::Period => ".",
+            RawDelimiter::Comma => ",",
+            RawDelimiter::Plus => "+",
+            RawDelimiter::Hyphen => "-",
+            RawDelimiter::Star => "*",
+            RawDelimiter::ForwardSlash => "/",
+            RawDelimiter::Percent => "%",
+            RawDelimiter::Ampersand => "&",
+            RawDelimiter::Pipe => "|",
+            RawDelimiter::Exclamation => "!",
+            RawDelimiter::ArrowLeft => "<",
+            RawDelimiter::ArrowRight => ">",
+            RawDelimiter::BracketLeft => "[",
+            RawDelimiter::BracketRight => "]",
+            RawDelimiter::BraceLeft => "{",
+            RawDelimiter::BraceRight => "}",
+            RawDelimiter::ParenLeft => "(",
+            RawDelimiter::ParenRight => ")",
+            RawDelimiter::At => "@",
+            RawDelimiter::Underscore => "_",
+        }
+    }
+}

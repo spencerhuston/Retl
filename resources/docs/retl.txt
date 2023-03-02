@@ -1,12 +1,14 @@
-1. no funcs
+1. lambdas only
+- parameter types optional
 2. basic arithmetic
-3. ints, strings, chars, bools, lists, dicts
+3. ints, strings, chars, bools, lists, dicts, tuples, schemas
 - type inference
 - range operator ..
 4. basic pattern matching
 - multi-choice: |
 - range: ..
 - named pattern: {name}@{value}
+- predicates
 5. if/else
 6. builtin-functions for ETL, functions passed in are denoted code-blocks:
 -- parallel keyword?
@@ -21,7 +23,11 @@
 - foldr
 - foreach
 - range
-7. list operators: ++, ===, [ ]
+7. collection operators
+- list append operator: ++
+- list/dict/tuple equality operator: ===
+- list/dict access operator: []
+- tuple access operator: .
 8. REPL
 - args:
      * retl <-d> => run the Retl REPL, optional debug mode
@@ -32,14 +38,71 @@
     3. run new code
     4. add to env
 9. lazy evaluation
-10. strong, static typing
+10. strong, dynamic typing
+11. Basic string interpolation for prints
 
 Structure:
 ReplRunner
 Logger
 Scanner
+- File Position
 Parser
 Types (impl Type)
-SemanticAnalyzer
 Values (impl Value)
 Interpreter
+
+Key characters:
+: - denote type
+-> - lambda return type
+= - assignment, function block start
+\ - extend newline
+; - end statement
+.. - range
++, -, *, /, % = arithmetic ops
+&&, ||, >, <, >=, <=, ==, !=, ! - boolean operators
+{ - start code block
+} - end code block
+[ - start list/dict, list/dict access
+] - end list/dict, list/dict access
+++ - list concat
+=== - list/dict/tuple comparison
+( - tuple start
+) - tuple end
+. - tuple access
+, - list, tuple, dict element separator
+@ - named pattern
+| - multi-pattern, start of lambda signature, end of lambda signature
+_ - catch-all case
+=> - case expression
+|> - bird operator, chain function calls
+
+
+Keywords:
+let
+Int
+Bool
+char
+string
+list
+dict
+tuple
+schema
+true
+false
+parallel
+if
+else
+match
+case
+readln
+readCSV
+writeCSV
+print
+println
+map
+filter
+zip
+foldl
+foldr
+foreach
+range

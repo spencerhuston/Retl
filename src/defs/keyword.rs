@@ -1,65 +1,66 @@
-pub enum Keyword {
-    Let,
-    Int,
-    Bool,
-    Char,
-    String,
-    List,
-    Dict,
-    Tuple,
-    Schema,
-    True,
-    False,
-    Parallel,
-    If,
-    Else,
-    Match,
-    Case,
-    Readln,
-    ReadCSV,
-    WriteCSV,
-    Print,
-    Println,
-    Map,
-    Filter,
-    Zip,
-    Foldl,
-    Foldr,
-    Foreach,
-    Range
-}
+use std::str::FromStr;
+use strum_macros::EnumString;
 
-impl Keyword {
-    fn val(&self) -> &'static str {
-        match self {
-            Keyword::Let => "let",
-            Keyword::Int => "int",
-            Keyword::Bool => "bool",
-            Keyword::Char => "char",
-            Keyword::String => "string",
-            Keyword::List => "list",
-            Keyword::Dict => "dict",
-            Keyword::Tuple => "tuple",
-            Keyword::Schema => "schema",
-            Keyword::True => "true",
-            Keyword::False => "false",
-            Keyword::Parallel => "parallel",
-            Keyword::If => "if",
-            Keyword::Else => "else",
-            Keyword::Match => "match",
-            Keyword::Case => "case",
-            Keyword::Readln => "readln",
-            Keyword::ReadCSV => "readCSV",
-            Keyword::WriteCSV => "writeCSV",
-            Keyword::Print => "print",
-            Keyword::Println => "println",
-            Keyword::Map => "map",
-            Keyword::Filter => "filter",
-            Keyword::Zip => "zip",
-            Keyword::Foldl => "foldl",
-            Keyword::Foldr => "foldr",
-            Keyword::Foreach => "foreach",
-            Keyword::Range => "range"
-        }
-    }
+#[derive(Debug, PartialEq, EnumString)]
+pub enum Keyword {
+    #[strum(serialize = "let")]
+    Let(String),
+    #[strum(serialize = "int")]
+    Int(String),
+    #[strum(serialize = "bool")]
+    Bool(String),
+    #[strum(serialize = "char")]
+    Char(String),
+    #[strum(serialize = "string")]
+    String(String),
+    #[strum(serialize = "list")]
+    List(String),
+    #[strum(serialize = "dict")]
+    Dict(String),
+    #[strum(serialize = "tuple")]
+    Tuple(String),
+    #[strum(serialize = "schema")]
+    Schema(String),
+    #[strum(serialize = "true")]
+    True(String),
+    #[strum(serialize = "false")]
+    False(String),
+    #[strum(serialize = "and")]
+    And(String),
+    #[strum(serialize = "or")]
+    Or(String),
+    #[strum(serialize = "parallel")]
+    Parallel(String),
+    #[strum(serialize = "if")]
+    If(String),
+    #[strum(serialize = "else")]
+    Else(String),
+    #[strum(serialize = "match")]
+    Match(String),
+    #[strum(serialize = "case")]
+    Case(String),
+    #[strum(serialize = "readln")]
+    Readln(String),
+    #[strum(serialize = "readCSV")]
+    ReadCSV(String),
+    #[strum(serialize = "writeCSV")]
+    WriteCSV(String),
+    #[strum(serialize = "print")]
+    Print(String),
+    #[strum(serialize = "println")]
+    Println(String),
+    #[strum(serialize = "map")]
+    Map(String),
+    #[strum(serialize = "filter")]
+    Filter(String),
+    #[strum(serialize = "zip")]
+    Zip(String),
+    #[strum(serialize = "foldl")]
+    Foldl(String),
+    #[strum(serialize = "foldr")]
+    Foldr(String),
+    #[strum(serialize = "foreach")]
+    Foreach(String),
+    #[strum(serialize = "range")]
+    Range(String)
 }

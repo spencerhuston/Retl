@@ -59,13 +59,12 @@ Key characters:
 ; - end statement
 .. - range
 +, -, *, /, % = arithmetic ops
-&&, ||, >, <, >=, <=, ==, !=, ! - boolean operators
+>, <, >=, <=, ==, !=, ! - boolean operators
 { - start code block
 } - end code block
 [ - start list/dict, list/dict access
 ] - end list/dict, list/dict access
 ++ - list concat
-=== - list/dict/tuple comparison
 ( - tuple start
 ) - tuple end
 . - tuple access
@@ -89,6 +88,8 @@ tuple
 schema
 true
 false
+and
+or
 parallel
 if
 else

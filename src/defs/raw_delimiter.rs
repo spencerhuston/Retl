@@ -1,57 +1,51 @@
-pub enum RawDelimiter {
-    Colon,
-    Equal,
-    Backslash,
-    Semicolon,
-    Period,
-    Comma,
-    Plus,
-    Hyphen,
-    Star,
-    ForwardSlash,
-    Percent,
-    Ampersand,
-    Pipe,
-    Exclamation,
-    ArrowLeft,
-    ArrowRight,
-    BracketLeft,
-    BracketRight,
-    BraceLeft,
-    BraceRight,
-    ParenLeft,
-    ParenRight,
-    At,
-    Underscore
-}
+use std::str::FromStr;
+use strum_macros::EnumString;
 
-impl RawDelimiter {
-    fn val(&self) -> &'static str {
-        match self {
-            RawDelimiter::Colon => ":",
-            RawDelimiter::Equal => "=",
-            RawDelimiter::Backslash => "\\",
-            RawDelimiter::Semicolon => ";",
-            RawDelimiter::Period => ".",
-            RawDelimiter::Comma => ",",
-            RawDelimiter::Plus => "+",
-            RawDelimiter::Hyphen => "-",
-            RawDelimiter::Star => "*",
-            RawDelimiter::ForwardSlash => "/",
-            RawDelimiter::Percent => "%",
-            RawDelimiter::Ampersand => "&",
-            RawDelimiter::Pipe => "|",
-            RawDelimiter::Exclamation => "!",
-            RawDelimiter::ArrowLeft => "<",
-            RawDelimiter::ArrowRight => ">",
-            RawDelimiter::BracketLeft => "[",
-            RawDelimiter::BracketRight => "]",
-            RawDelimiter::BraceLeft => "{",
-            RawDelimiter::BraceRight => "}",
-            RawDelimiter::ParenLeft => "(",
-            RawDelimiter::ParenRight => ")",
-            RawDelimiter::At => "@",
-            RawDelimiter::Underscore => "_",
-        }
-    }
+#[derive(Debug, PartialEq, EnumString)]
+pub enum RawDelimiter {
+    Colon(String),
+    #[strum(serialize = ":")]
+    Equal(String),
+    #[strum(serialize = "=")]
+    Backslash(String),
+    #[strum(serialize = "\\")]
+    Semicolon(String),
+    #[strum(serialize = ".")]
+    Period(String),
+    #[strum(serialize = ",")]
+    Comma(String),
+    #[strum(serialize = "+")]
+    Plus(String),
+    #[strum(serialize = "-")]
+    Hyphen(String),
+    #[strum(serialize = "*")]
+    Star(String),
+    #[strum(serialize = "/")]
+    ForwardSlash(String),
+    #[strum(serialize = "%")]
+    Percent(String),
+    #[strum(serialize = "|")]
+    Pipe(String),
+    #[strum(serialize = "!")]
+    Exclamation(String),
+    #[strum(serialize = "<")]
+    ArrowLeft(String),
+    #[strum(serialize = ">")]
+    ArrowRight(String),
+    #[strum(serialize = "[")]
+    BracketLeft(String),
+    #[strum(serialize = "]")]
+    BracketRight(String),
+    #[strum(serialize = "{")]
+    BraceLeft(String),
+    #[strum(serialize = "}")]
+    BraceRight(String),
+    #[strum(serialize = "(")]
+    ParenLeft(String),
+    #[strum(serialize = ")")]
+    ParenRight(String),
+    #[strum(serialize = "@")]
+    At(String),
+    #[strum(serialize = "_")]
+    Underscore
 }

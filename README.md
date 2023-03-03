@@ -7,7 +7,7 @@ Supported features in-progress:
 - stdin/out
 - integer, boolean, char, string, list, and dictionary types
 - range construction for int and char types
-- list operators: ++, ===, []
+- list operators: ++, ==, []
 - type inference
 - basic integer arithmetic
 - if/else branching
@@ -15,6 +15,7 @@ Supported features in-progress:
   * multi-match: |
   * range: ..
   * named match: @
+  * predicates
 - Builtin functions: map, filter, foreach, etc.
 - Lazy evaluation
 - *parallel* keyword

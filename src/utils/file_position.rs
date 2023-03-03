@@ -1,7 +1,8 @@
+#[derive(Clone)]
 pub struct FilePosition {
-    line: i32,
-    column: i32,
-    line_text: String
+    pub(crate) line: i32,
+    pub(crate) column: i32,
+    pub(crate) line_text: String
 }
 
 impl FilePosition {

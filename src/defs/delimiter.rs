@@ -1,79 +1,70 @@
-pub enum Delimiter {
-    DenoteType,
-    ReturnType,
-    Assignment,
-    NewlineSlash,
-    StatementEnd,
-    Range,
-    Plus,
-    Minus,
-    Multiply,
-    Divide,
-    Modulus,
-    And,
-    Or,
-    GreaterThan,
-    LessThan,
-    GreaterThanEqualTo,
-    LessThanEqualTo,
-    Equal,
-    NotEqual,
-    Not,
-    ListConcat,
-    CollectionEqual,
-    ParenLeft,
-    ParenRight,
-    BracketLeft,
-    BracketRight,
-    BraceLeft,
-    BraceRight,
-    TupleAccess,
-    Comma,
-    NamedPattern,
-    MultiPattern,
-    CatchallCase,
-    CaseExp,
-    Bird
-}
+use std::str::FromStr;
+use strum_macros::EnumString;
 
-impl Delimiter {
-    fn val(&self) -> &'static str {
-        match self {
-            Delimiter::DenoteType => ":",
-            Delimiter::ReturnType => "->",
-            Delimiter::Assignment => "=",
-            Delimiter::NewlineSlash => "\\",
-            Delimiter::StatementEnd => ";",
-            Delimiter::Range => "..",
-            Delimiter::Plus => "+",
-            Delimiter::Minus => "-",
-            Delimiter::Multiply => "*",
-            Delimiter::Divide => "/",
-            Delimiter::Modulus => "%",
-            Delimiter::And => "&&",
-            Delimiter::Or => "||",
-            Delimiter::GreaterThan => ">",
-            Delimiter::LessThan => "<",
-            Delimiter::GreaterThanEqualTo => ">=",
-            Delimiter::LessThanEqualTo => "<=",
-            Delimiter::Equal => "==",
-            Delimiter::NotEqual => "!=",
-            Delimiter::Not => "!",
-            Delimiter::ListConcat => "++",
-            Delimiter::CollectionEqual => "===",
-            Delimiter::BracketLeft => "[",
-            Delimiter::BracketRight => "]",
-            Delimiter::BraceLeft => "{",
-            Delimiter::BraceRight => "}",
-            Delimiter::ParenLeft => "(",
-            Delimiter::ParenRight => ")",
-            Delimiter::TupleAccess => ".",
-            Delimiter::Comma => ",",
-            Delimiter::NamedPattern => "@",
-            Delimiter::MultiPattern => "|",
-            Delimiter::CatchallCase => "_",
-            Delimiter::CaseExp => "=>",
-            Delimiter::Bird => "|>"
-        }
-    }
+#[derive(Debug, PartialEq, EnumString)]
+pub enum Delimiter {
+    #[strum(serialize = ":")]
+    DenoteType(String),
+    #[strum(serialize = "->")]
+    ReturnType(String),
+    #[strum(serialize = "=")]
+    Assignment(String),
+    #[strum(serialize = "\\")]
+    NewlineSlash(String),
+    #[strum(serialize = ";")]
+    StatementEnd(String),
+    #[strum(serialize = "..")]
+    Range(String),
+    #[strum(serialize = "+")]
+    Plus(String),
+    #[strum(serialize = "-")]
+    Minus(String),
+    #[strum(serialize = "*")]
+    Multiply(String),
+    #[strum(serialize = "/")]
+    Divide(String),
+    #[strum(serialize = "%")]
+    Modulus(String),
+    #[strum(serialize = ">")]
+    GreaterThan(String),
+    #[strum(serialize = "<")]
+    LessThan(String),
+    #[strum(serialize = ">=")]
+    GreaterThanEqualTo(String),
+    #[strum(serialize = "<=")]
+    LessThanEqualTo(String),
+    #[strum(serialize = "==")]
+    Equal(String),
+    #[strum(serialize = "!=")]
+    NotEqual(String),
+    #[strum(serialize = "!")]
+    Not(String),
+    #[strum(serialize = "++")]
+    ListConcat(String),
+    #[strum(serialize = "|")]
+    LambdaSig(String),
+    #[strum(serialize = "(")]
+    ParenLeft(String),
+    #[strum(serialize = ")")]
+    ParenRight(String),
+    #[strum(serialize = "[")]
+    BracketLeft(String),
+    #[strum(serialize = "]")]
+    BracketRight(String),
+    #[strum(serialize = "{")]
+    BraceLeft(String),
+    #[strum(serialize = "}")]
+    BraceRight(String),
+    #[strum(serialize = ".")]
+    TupleAccess(String),
+    #[strum(serialize = ",")]
+    Comma(String),
+    #[strum(serialize = "@")]
+    NamedPattern(String),
+    #[strum(serialize = "_")]
+    CatchallCase(String),
+    #[strum(serialize = "=>")]
+    CaseExp(String),
+    #[strum(serialize = "|>")]
+    Bird
 }

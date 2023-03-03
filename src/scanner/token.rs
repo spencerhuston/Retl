@@ -1,14 +1,12 @@
+use strum_macros::Display;
+
 use crate::utils::file_position::FilePosition;
 use crate::defs::{delimiter::Delimiter, keyword::Keyword};
 
-pub struct TokenInfo {
-    pub(crate) token_text: String,
-    pub(crate) fp: FilePosition
-}
-
+#[derive(Display, Debug)]
 pub enum Token {
-    Delimiter { t: TokenInfo, delim: Delimiter },
-    Keyword { t: TokenInfo, keyword: Keyword },
-    Value { t: TokenInfo, value: String },
-    Ident { t: TokenInfo, ident: String }
+    Delimiter { delim: Delimiter, fp: FilePosition },
+    Keyword { keyword: Keyword, fp: FilePosition },
+    Value { value: String, fp: FilePosition },
+    Ident { ident: String, fp: FilePosition }
 }

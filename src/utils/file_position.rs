@@ -1,7 +1,7 @@
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FilePosition {
-    pub(crate) line: i32,
-    pub(crate) column: i32,
+    pub(crate) line: usize,
+    pub(crate) column: usize,
     pub(crate) line_text: String
 }
 

@@ -1,14 +1,14 @@
-use std::str::FromStr;
 use strum_macros::EnumString;
 
 #[derive(Debug, PartialEq, EnumString)]
 pub enum RawDelimiter {
-    Colon(String),
     #[strum(serialize = ":")]
-    Equal(String),
+    Colon(String),
     #[strum(serialize = "=")]
-    Backslash(String),
+    Equal(String),
     #[strum(serialize = "\\")]
+    Backslash(String),
+    #[strum(serialize = ";")]
     Semicolon(String),
     #[strum(serialize = ".")]
     Period(String),
@@ -45,7 +45,5 @@ pub enum RawDelimiter {
     #[strum(serialize = ")")]
     ParenRight(String),
     #[strum(serialize = "@")]
-    At(String),
-    #[strum(serialize = "_")]
-    Underscore
+    At(String)
 }

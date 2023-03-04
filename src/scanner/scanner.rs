@@ -58,69 +58,74 @@ fn is_ident(token: &String) -> bool {
     ident_regex.is_match(token.borrow())
 }
 
-fn is_whitespace_update_file_pos(c: char, file_pos: &mut FilePosition, inside_quotes: &mut bool) -> bool {
+fn is_whitespace(c: char, inside_quotes: bool) -> bool {
+    match c {
+        '\n' | '\r' | '\t' => true,
+        ' ' => if inside_quotes { false } else { true },
+        _ => false
+    }
+}
+
+fn update_file_pos(c: char, file_pos: &mut FilePosition) {
     match c {
         '\n' => {
             file_pos.column = 0;
             file_pos.line += 1;
-            file_pos.line_text.clear();
-            true
+            file_pos.line_text.clear()
         },
-        '\r' => true,
-        ' ' => {
-            file_pos.column += 1;
-            !*inside_quotes
-        },
-        '\t' => {
-            file_pos.column += "\t".len();
-            true
-        },
-        _ => {
-            file_pos.column += 1;
-            false
-        }
+        '\r' => (),
+        '\t' => file_pos.column += "\t".len(),
+        _ => file_pos.column += 1
     }
-}
-
-fn push_char(token_text: &mut String, c: char, file_pos: &mut FilePosition) {
-    file_pos.column += 1;
-    token_text.push(c);
 }
 
 impl Scanner {
     fn push_delim_token(&mut self, token: &String, file_pos: &FilePosition) {
+        if token.is_empty() {
+            return;
+        }
+
+        let mut temp_file_pos = file_pos.clone();
+    
+        println!("token: {}, len: {}, column: {}", token, token.len(), temp_file_pos.column);
         self.tokens.push(
             Token::Delimiter { 
                 delim: delimiter::Delimiter::from_str(token).unwrap(),
-                fp: file_pos.clone()
+                fp: temp_file_pos
             }
         )
     }
 
     fn push_non_delim_token(&mut self, token: &mut String, file_pos: &FilePosition) {
+        if token.is_empty() {
+            return;
+        }
+
+        let mut temp_file_pos = file_pos.clone();
+        println!("token: {}, len: {}, column: {}", token, token.len(), temp_file_pos.column);
         if is_keyword(token) {
             self.tokens.push(
-                Token::Keyword { 
+                Token::Keyword {
                     keyword: keyword::Keyword::from_str(token).unwrap(),
-                    fp: file_pos.clone()
+                    fp: temp_file_pos
                 }
             )
         } else if is_value(token) {
             self.tokens.push(
                 Token::Value {
                     value: token.clone(),
-                    fp: file_pos.clone()
+                    fp: temp_file_pos
                 }
             )
         } else if is_ident(token) {
             self.tokens.push(
-                Token::Ident { 
+                Token::Ident {
                     ident: token.clone(),
-                    fp: file_pos.clone()
+                    fp: temp_file_pos
                 }
             )
         } else {
-            () // THROW ERROR HERE, INVALID TOKEN
+            println!("ERROR HERE")
         }
         token.clear()
     }
@@ -148,7 +153,7 @@ impl Scanner {
         println!("{}", script);
         println!("====================");
 
-        let mut lines = script.lines();
+        let lines = script.lines();
         let text: Vec<char> = script.chars().collect();
         let mut token = String::from("");
         let mut inside_quotes = false;
@@ -166,7 +171,11 @@ impl Scanner {
             if !is_valid_character(&c) {
                 // THROW ERROR HERE, INVALID CHARACTER
                 continue;
-            } else if is_whitespace_update_file_pos(c, file_pos, &mut inside_quotes) {
+            } 
+            
+            update_file_pos(c, file_pos);
+
+            if is_whitespace(c, inside_quotes) {
                 self.push_non_delim_token(&mut token, &file_pos);
                 continue;
             } else if skip {
@@ -179,6 +188,7 @@ impl Scanner {
                 let mut delim = String::from(text[i]);
                 if peek_raw_delim(&i, &text) {
                     skip = true;
+                    file_pos.column += 1;
                     delim.push(text[i + 1]);
                     self.add_delim_token(Right(&delim), &file_pos)
                 } else {
@@ -188,13 +198,15 @@ impl Scanner {
                 if c == '\'' || c == '\"' {
                     inside_quotes = !inside_quotes;
                 }
-                push_char(&mut token, c, file_pos)
+                
+                if (c == ' ' && inside_quotes) || !c.is_whitespace() {
+                    token.push(c)
+                }
             }
         }
         
-        if !token.is_empty() {
-            self.push_non_delim_token(&mut token, &file_pos);
-        }
+        println!("token: {}", token);
+        self.push_non_delim_token(&mut token, &file_pos);
 
         for t in self.tokens.iter() {
             println!("{:?}\n", t)

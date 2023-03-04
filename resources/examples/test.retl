@@ -1,13 +1,2 @@
 let arr = [1, 2, 3, 4];
-writeCSV("temp", {});
-temp_schema: schema = {
-    num: int
-};
-let arr2 = readCSV("temp", temp_schema)["num"] |>
-            filter(|x| = {
-                match x {
-                    case x if x % 2 == 0 => true
-                    _ => false
-                }
-            });
-println("Even nums: {}", arr2)
+arr

@@ -1,7 +1,7 @@
-let arr = [1, 2, 3, 4];
+let 2arr = [1, 2, 3, 4];
 writeCSV("temp", {});
 temp_schema: schema = {
-    num: int
+    num: str^ing
 };
 let arr2 = readCSV("temp", temp_schema)["num"] |>
             filter(|x| = {

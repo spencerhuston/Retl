@@ -1,5 +1,4 @@
 use std::borrow::Borrow;
-use std::fs::File;
 use std::str::FromStr;
 use regex::Regex;
 use either::*;
@@ -10,13 +9,14 @@ use crate::defs::delimiter;
 use crate::defs::raw_delimiter;
 use crate::utils::file_position::FilePosition;
 use crate::scanner::token::Token;
+use crate::utils::logger;
 
 pub struct Scanner {
     pub(crate) tokens: Vec<Token>
 }
 
 fn is_valid_character(c: &char, inside_quotes: &bool) -> bool {
-    *inside_quotes || c.is_alphanumeric() || c.is_whitespace() || *c != '_' || *c != '\'' || *c != '\"' || is_raw_delim(c, inside_quotes.borrow())
+    *inside_quotes || c.is_alphanumeric() || c.is_whitespace() || *c == '_' || *c == '\'' || *c == '\"' || is_raw_delim(c, inside_quotes.borrow())
 }
 
 fn is_raw_delim(c: &char, inside_quotes: &bool) -> bool {
@@ -86,6 +86,12 @@ fn incremented_fp(file_pos: &FilePosition) -> FilePosition {
     file_pos2
 }
 
+fn column_adjusted_fp(file_pos: &FilePosition, token: &String) -> FilePosition {
+    let mut temp_file_pos = file_pos.clone();
+    temp_file_pos.column -= token.len();
+    temp_file_pos
+}
+
 impl Scanner {
     fn push_delim_token(&mut self, token: &String, file_pos: &FilePosition) {
         if token.is_empty() {
@@ -113,7 +119,6 @@ impl Scanner {
             self.tokens.push(
                 Token::Keyword {
                     keyword: keyword::Keyword::from_str(token).unwrap(),
-
                     fp: temp_file_pos
                 }
             )
@@ -132,7 +137,9 @@ impl Scanner {
                 }
             )
         } else {
-            println!("INVALID TOKEN")
+            let mut message = String::from("Unexpected token: ");
+            message += token;
+            logger::error(&message, Some(&column_adjusted_fp(&file_pos, &token)));
         }
         token.clear()
     }
@@ -176,7 +183,9 @@ impl Scanner {
             file_pos.line_text = lines.clone().nth(file_pos.line).unwrap().to_string();
 
             if !is_valid_character(&c, &inside_quotes.borrow()) {
-                println!("INVALID CHARACTER");
+                let mut message = String::from("Invalid character: ");
+                message += &c.to_string();
+                logger::error(&message, Some(&incremented_fp(file_pos)));
                 continue;
             } 
             

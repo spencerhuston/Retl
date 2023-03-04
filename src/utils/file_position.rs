@@ -6,7 +6,13 @@ pub struct FilePosition {
 }
 
 impl FilePosition {
-    fn position() {
-        () // TODO
+    pub fn position(&self) -> String {
+        let mut pos_string = String::from("");
+        pos_string += &("Line: ".to_string() + &self.line.to_string() + ", column: " + &self.column.to_string() + "\n");
+        pos_string += &self.line_text;
+        pos_string += "\n";
+        pos_string += &"-".to_string().repeat(self.column - 1);
+        pos_string += &"^".to_string();
+        pos_string
     }
 }

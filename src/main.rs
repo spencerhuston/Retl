@@ -64,6 +64,6 @@ fn main() {
 
     match result {
         Ok(_) => (),
-        Err(e) => println!("\x1b[31mERROR: {e}\x1b[0m")
+        Err(e) => utils::logger::error(&e.to_string(), None)
     }
 }

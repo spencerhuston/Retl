@@ -7,9 +7,9 @@ pub enum Type {
     CharType,
     StringType,
     NullType,
-    ListType{listType: Box<Type>},
-    TupleType{tupleTypes: Vec<Type>},
-    DictType{keyType: Box<Type>, valueType: Box<Type>},
+    ListType{list_type: Box<Type>},
+    TupleType{tuple_types: Vec<Type>},
+    DictType{key_type: Box<Type>, value_type: Box<Type>},
     SchemaType,
-    FuncType{paramTypes: Vec<Type>, returnType: Box<Type>}
+    FuncType{param_types: Vec<Type>, return_type: Box<Type>}
 }

@@ -39,7 +39,7 @@
 <alias> ::= 'alias' <ident> '=' <type>
 
 <smp> ::= <utight>[<op><utight>]
-    | 'if' <smp> '{' <smp> '}' ['else' '{' <smp> '}']
+    | 'if' '('<smp>')' '{' <smp> '}' ['else' '{' <smp> '}']
     | '['[<smp>[':'<smp>][','<smp>[':'<smp>]]*]']'
     | '('<smp>[','<smp>]')'
     | '$''{'<ident>':'<type>[','<ident>':'<type>]*'}'

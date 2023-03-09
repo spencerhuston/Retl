@@ -33,23 +33,34 @@ pub enum Operator {
 }
 
 impl Operator {
-    pub fn isArithmeticOp(&self) -> bool {
-        match self {
-            Plus | Minus | Multiply | Divide | Modulus => true,
+    pub fn is_arithmetic_op(&self) -> bool {
+        match *self {
+            Operator::Plus(_) | 
+            Operator::Minus(_) | 
+            Operator::Multiply(_) | 
+            Operator::Divide(_) | 
+            Operator::Modulus(_) => true,
             _ => false
         }
     }
 
-    pub fn isBooleanOp(&self) -> bool {
-        match self {
-            GreaterThan | LessThan | GreaterThanEqualTo | LessThanEqualTo | Equal | Not | And | Or => true,
+    pub fn is_boolean_op(&self) -> bool {
+        match *self {
+            Operator::GreaterThan(_) | 
+            Operator::LessThan(_) | 
+            Operator::GreaterThanEqualTo(_) | 
+            Operator::LessThanEqualTo(_) | 
+            Operator::Equal(_) | 
+            Operator::Not(_) | 
+            Operator::And(_) | 
+            Operator::Or(_) => true,
             _ => false
         }
     }
 
-    pub fn isUnaryOp(&self) -> bool {
-        match self {
-            Minus | Not => true,
+    pub fn is_unary_op(&self) -> bool {
+        match *self {
+            Operator::Minus(_) | Operator::Not(_) => true,
             _ => false
         }
     }

@@ -7,7 +7,7 @@ pub struct FilePosition {
 
 impl FilePosition {
     pub fn position(&self) -> String {
-        let mut pos_string = String::from("");
+        let mut pos_string = String::from("\n");
         pos_string += &("Line: ".to_string() + &self.line.to_string() + ", column: " + &self.column.to_string() + "\n");
         pos_string += &self.line_text;
         pos_string += "\n";

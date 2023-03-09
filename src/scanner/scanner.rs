@@ -3,13 +3,13 @@ use std::str::FromStr;
 use regex::Regex;
 use either::*;
 use substring::Substring;
+use log::{info, error};
 
 use crate::defs::keyword;
 use crate::defs::delimiter;
 use crate::defs::raw_delimiter;
 use crate::utils::file_position::FilePosition;
 use crate::scanner::token::Token;
-use crate::utils::logger;
 
 pub struct Scanner {
     pub(crate) tokens: Vec<Token>
@@ -92,14 +92,19 @@ fn column_adjusted_fp(file_pos: &FilePosition, token: &String) -> FilePosition {
     temp_file_pos
 }
 
+fn token_adjusted_fp(file_pos: &FilePosition, token: &String) -> FilePosition {
+    let mut temp_file_pos = file_pos.clone();
+    temp_file_pos.column -= token.len() + 1;
+    temp_file_pos
+}
+
 impl Scanner {
     fn push_delim_token(&mut self, token: &String, file_pos: &FilePosition) {
         if token.is_empty() {
             return;
         }
 
-        let mut temp_file_pos = file_pos.clone();
-        temp_file_pos.column -= token.len();
+        let temp_file_pos = column_adjusted_fp(&file_pos, &token);
         self.tokens.push(
             Token::Delimiter { 
                 delim: delimiter::Delimiter::from_str(token).unwrap(),
@@ -113,8 +118,7 @@ impl Scanner {
             return;
         }
 
-        let mut temp_file_pos = file_pos.clone();
-        temp_file_pos.column -= token.len() + 1;
+        let temp_file_pos = token_adjusted_fp(&file_pos, &token);
         if is_keyword(token) {
             self.tokens.push(
                 Token::Keyword {
@@ -137,9 +141,7 @@ impl Scanner {
                 }
             )
         } else {
-            let mut message = String::from("Unexpected token: ");
-            message += token;
-            logger::error(&message, Some(&column_adjusted_fp(&file_pos, &token)));
+            error!("Unexpected: {}", file_pos.position());
         }
         token.clear()
     }
@@ -183,9 +185,7 @@ impl Scanner {
             file_pos.line_text = lines.clone().nth(file_pos.line).unwrap().to_string();
 
             if !is_valid_character(&c, &inside_quotes.borrow()) {
-                let mut message = String::from("Invalid character: ");
-                message += &c.to_string();
-                logger::error(&message, Some(&incremented_fp(file_pos)));
+                error!("Invalid character: {}", file_pos.position());
                 continue;
             } 
             

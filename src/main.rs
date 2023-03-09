@@ -52,6 +52,7 @@ fn main() {
     let retl_args = RetlApp::parse();
 
     let debug = retl_args.debug;
+    env_logger::init();
     let result = match retl_args.file {
         Some(path_buf) => {
             match read_retl_file(&path_buf) {

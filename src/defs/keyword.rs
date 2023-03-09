@@ -12,6 +12,8 @@ pub enum Keyword {
     Char(String),
     #[strum(serialize = "string")]
     String(String),
+    #[strum(serialize = "null")]
+    Null(String),
     #[strum(serialize = "list")]
     List(String),
     #[strum(serialize = "dict")]
@@ -28,6 +30,8 @@ pub enum Keyword {
     And(String),
     #[strum(serialize = "or")]
     Or(String),
+    #[strum(serialize = "not")]
+    Not(String),
     #[strum(serialize = "parallel")]
     Parallel(String),
     #[strum(serialize = "if")]

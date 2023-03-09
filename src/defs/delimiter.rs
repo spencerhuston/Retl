@@ -65,5 +65,7 @@ pub enum Delimiter {
     #[strum(serialize = "=>")]
     CaseExp(String),
     #[strum(serialize = "|>")]
-    Bird
+    Bird(String),
+    #[strum(serialize = "$")]
+    SchemaStart(String)
 }

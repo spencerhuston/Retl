@@ -3,7 +3,7 @@ use std::str::FromStr;
 use regex::Regex;
 use either::*;
 use substring::Substring;
-use log::{info, error};
+use log::{debug, error};
 
 use crate::defs::keyword;
 use crate::defs::delimiter;

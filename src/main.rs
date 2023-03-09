@@ -6,6 +6,7 @@ use std::error::Error;
 use clap::Parser;
 use std::path::PathBuf;
 use std::fs;
+use log::error;
 
 use scanner::scanner::Scanner;
 
@@ -38,12 +39,12 @@ fn read_retl_file(path_buf: &PathBuf) -> Result<String, Box<dyn Error>> {
     }
 }
 
-fn run_retl(script: &String, debug: bool) -> Result<(), Box<dyn Error>> {
+fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
     Scanner::scan(&mut Scanner { tokens: vec![] }, script);
     Ok(())
 }
 
-fn run_retl_repl(debug: bool) -> Result<(), Box<dyn Error>> {
+fn run_retl_repl() -> Result<(), Box<dyn Error>> {
     // TODO
     Ok(())
 }
@@ -51,20 +52,19 @@ fn run_retl_repl(debug: bool) -> Result<(), Box<dyn Error>> {
 fn main() {
     let retl_args = RetlApp::parse();
 
-    let debug = retl_args.debug;
     env_logger::init();
     let result = match retl_args.file {
         Some(path_buf) => {
             match read_retl_file(&path_buf) {
-                Ok(script) => run_retl(&script, debug),
+                Ok(script) => run_retl(&script),
                 Err(e) => Err(e)
             }
         },
-        None => run_retl_repl(debug)
+        None => run_retl_repl()
     };
 
     match result {
         Ok(_) => (),
-        Err(e) => utils::logger::error(&e.to_string(), None)
+        Err(e) => error!("{}", e.to_string())
     }
 }

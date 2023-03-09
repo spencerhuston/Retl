@@ -1,0 +1,50 @@
+<type> ::= 'int' | 'bool' | 'char' | 'string' | 'null'
+    | <type> '->' <type>
+    | '('[<type>[','<type>]*]')' '->' '('[<type>[','<type>]*]')'
+    | 'list''['<type>']'
+    | 'dict''['<type>','<type>']'
+    | 'tuple''['<type>[','<type>]*']'
+    | 'schema'
+    | <ident>
+
+<literal> ::= <int> | <range> | <bool> | <char> | <string> | <null>
+<int> ::= [integer]
+<range> ::= <int>'..'<int>
+<bool> ::= 'true' | 'false'
+<char> ::= '''[character]'''
+<string> ::= '"'[character]*'"'
+<null> ::= 'null'
+
+<atom> ::= <literal>
+    | '('<smp>')'
+    | <ident>['.'<ident>]
+
+<param> ::= <ident>[':' <type>]
+<lambda> ::= '|'[<param>[','<param>]*]'|' ['->' <type>] '=' '{'<exp>'}'
+
+<app> ::= <atom>['('[<smp>[','<smp>]*]')']
+
+<pattern> ::= <ident>':'<type> ['if' <smp>] | <literal>['|'<literal>]* | '_'
+<match> ::= 'match' <atom> '{' 'case' <pattern> '=>' <smp>[',''case' <pattern> '=>' <smp>]*'}'
+
+<tight> ::= <app>['|>'<app>]
+
+<arithOp> ::= '+' | '-' | '*' | '/' | '%'
+<boolOp> ::= '<' | '>' | '<=' | '>=' | '==' | 'not' | 'and' | 'or'
+<op> ::= <arithOp> | <boolOp> | '++'
+
+<utight> ::= [<op>]<tight>
+
+<alias> ::= 'alias' <ident> '=' <type>
+
+<smp> ::= <utight>[<op><utight>]
+    | 'if' <smp> '{' <smp> '}' ['else' '{' <smp> '}']
+    | '['[<smp>[':'<smp>][','<smp>[':'<smp>]]*]']'
+    | '('<smp>[','<smp>]')'
+    | '$''{'<ident>':'<type>[','<ident>':'<type>]*'}'
+    | <match>
+    | <lambda>
+    | <alias>
+
+<exp> ::= <smp>[';'<exp>]
+    | 'let' <ident> [':' <type>] '=' <smp>';'<exp>

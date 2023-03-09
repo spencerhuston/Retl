@@ -45,5 +45,7 @@ pub enum RawDelimiter {
     #[strum(serialize = ")")]
     ParenRight(String),
     #[strum(serialize = "@")]
-    At(String)
+    At(String),
+    #[strum(serialize = "$")]
+    DollarSign(String),
 }

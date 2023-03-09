@@ -59,17 +59,16 @@ Key characters:
 ; - end statement
 .. - range
 +, -, *, /, % = arithmetic ops
->, <, >=, <=, ==, !=, ! - boolean operators
+>, <, >=, <=, ==, not, and, or - boolean operators
 { - start code block
 } - end code block
 [ - start list/dict, list/dict access
 ] - end list/dict, list/dict access
-++ - list concat
+++ - list, dict, tuple concat
 ( - tuple start
 ) - tuple end
 . - tuple access
 , - list, tuple, dict element separator
-@ - named pattern
 | - multi-pattern, start of lambda signature, end of lambda signature
 _ - catch-all case
 => - case expression
@@ -82,6 +81,7 @@ Int
 Bool
 char
 string
+null
 list
 dict
 tuple

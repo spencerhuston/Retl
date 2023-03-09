@@ -7,24 +7,25 @@
     | 'schema'
     | <ident>
 
-<literal> ::= <int> | <range> | <bool> | <char> | <string> | <null>
+<literal> ::= <int> | <bool> | <char> | <string> | <null>
 <int> ::= [integer]
-<range> ::= <int>'..'<int>
 <bool> ::= 'true' | 'false'
 <char> ::= '''[character]'''
 <string> ::= '"'[character]*'"'
 <null> ::= 'null'
+
+<range> ::= <int>'..'<int>
 
 <atom> ::= <literal>
     | '('<smp>')'
     | <ident>['.'<ident>]
 
 <param> ::= <ident>[':' <type>]
-<lambda> ::= '|'[<param>[','<param>]*]'|' ['->' <type>] '=' '{'<exp>'}'
+<lambda> ::= '|'[<param>[','<param>]*]'|' '->' <type> '=' '{'<exp>'}'
 
 <app> ::= <atom>['('[<smp>[','<smp>]*]')']
 
-<pattern> ::= <ident>':'<type> ['if' <smp>] | <literal>['|'<literal>]* | '_'
+<pattern> ::= <ident>':'<type> ['if' <smp>] | <literal>['|'<literal>]* | <range> | '_'
 <match> ::= 'match' <atom> '{' 'case' <pattern> '=>' <smp>[',''case' <pattern> '=>' <smp>]*'}'
 
 <tight> ::= <app>['|>'<app>]

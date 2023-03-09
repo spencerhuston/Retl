@@ -1,5 +1,5 @@
 let arr = [1, 2, 3, 4];
-writeCSV("temp", {});
+writeCSV("temp", ${}, false);
 temp_schema: schema = {
     num: string
 };

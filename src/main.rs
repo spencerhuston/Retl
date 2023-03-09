@@ -40,7 +40,8 @@ fn read_retl_file(path_buf: &PathBuf) -> Result<String, Box<dyn Error>> {
 }
 
 fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
-    Scanner::scan(&mut Scanner { tokens: vec![] }, script);
+    let scanner = &mut Scanner { tokens: vec![] };
+    scanner.scan(&script);
     Ok(())
 }
 

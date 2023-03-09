@@ -34,8 +34,6 @@ pub enum Delimiter {
     LessThanEqualTo(String),
     #[strum(serialize = "==")]
     Equal(String),
-    #[strum(serialize = "!=")]
-    NotEqual(String),
     #[strum(serialize = "!")]
     Not(String),
     #[strum(serialize = "++")]
@@ -58,8 +56,6 @@ pub enum Delimiter {
     TupleAccess(String),
     #[strum(serialize = ",")]
     Comma(String),
-    #[strum(serialize = "@")]
-    NamedPattern(String),
     #[strum(serialize = "_")]
     CatchallCase(String),
     #[strum(serialize = "=>")]

@@ -5,14 +5,14 @@ use crate::scanner::token::Token;
 use crate::defs::retl_type::Type;
 use crate::defs::operator::Operator;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Exp {
     pub exp: Expression,
     pub exp_type: Type,
     pub token: Token
 }
 
-#[derive(Display, Debug)]
+#[derive(Display, Debug, Clone)]
 pub enum Literal {
     IntLit{literal: i32},
     BoolLit{literal: bool},
@@ -21,14 +21,14 @@ pub enum Literal {
     NullLit
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Parameter {
     ident: String, 
     param_type: Option<Type>,
     token: Token
 }
 
-#[derive(Display, Debug)]
+#[derive(Display, Debug, Clone)]
 pub enum Pattern {
     TypePattern{ident: String, case_type: Type, predicate: Option<Exp>},
     Literal{literal: Literal},
@@ -37,13 +37,13 @@ pub enum Pattern {
     Any
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Case {
     pattern: Pattern,
     case_exp: Exp
 }
 
-#[derive(Display, Debug)]
+#[derive(Display, Debug, Clone)]
 pub enum Expression {
     Lit{lit: Literal},
     Let{ident: String, let_type: Type, let_exp: Box<Exp>, after_let_exp: Box<Option<Exp>>},

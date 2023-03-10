@@ -4,8 +4,9 @@ use std::borrow::Borrow;
 use crate::scanner::token::{make_empty_token, Token};
 use crate::defs::keyword::Keyword;
 use crate::defs::delimiter::Delimiter;
-use crate::defs::expression::{Exp, Expression};
+use crate::defs::expression::{Exp, Expression, Literal};
 use crate::defs::expression::Expression::Primitive;
+use crate::defs::operator::Operator;
 use crate::defs::retl_type::Type;
 use crate::defs::retl_type::Type::{NullType, UnknownType};
 
@@ -264,11 +265,72 @@ impl Parser {
     }
 
     fn parse_utight(&mut self) -> Exp {
-        self.make_empty_exp_todo()
+        let token = self.curr();
+        let mut operator: Option<Operator> = None;
+        if self.match_optional_keyword(Keyword::Not) {
+            operator = Some(self.curr().to_operator().unwrap())
+        } else if self.match_optional_delimiter(Delimiter::Minus) {
+            operator = Some(self.curr().to_operator().unwrap())
+        }
+
+        let right = self.parse_tight();
+        match operator {
+            Some(Operator::Not) => Exp{
+                exp: Primitive{
+                    operator: Operator::And,
+                    left: Box::new(Exp{
+                        exp: Expression::Lit{lit: Literal::BoolLit{literal: false}},
+                        exp_type: Type::BoolType,
+                        token: token.clone()
+                    }),
+                    right: Box::new(right)},
+                exp_type: UnknownType,
+                token: token.clone()
+            },
+            Some(Operator::Minus) => Exp{
+                exp: Primitive{
+                    operator: Operator::Minus,
+                    left: Box::new(Exp{
+                        exp: Expression::Lit{lit: Literal::IntLit{literal: 0}},
+                        exp_type: Type::IntType,
+                        token: token.clone()
+                    }),
+                    right: Box::new(right)},
+                exp_type: UnknownType,
+                token: token.clone()
+            },
+            _ => right
+        }
     }
 
     fn parse_tight(&mut self) -> Exp {
-        self.make_empty_exp_todo()
+        let token = self.curr();
+        match self.curr() {
+            Token::Delimiter{..}
+                if self.match_optional_delimiter(Delimiter::BraceLeft)
+            => {
+                let exp = self.parse_simple_expression();
+                self.match_required_delimiter(Delimiter::BraceRight);
+                exp
+            },
+            _ => {
+                let mut inner_app = self.parse_application();
+                while self.match_optional_delimiter(Delimiter::Bird) {
+                    let outer_app = self.parse_application();
+                    // TODO: throw error if outer app is not application expression
+                    match outer_app.exp.clone() {
+                        Expression::Application{ident, mut args } => {
+                            let mut temp_args = vec![inner_app];
+                            temp_args.append(&mut args);
+                            args = temp_args
+                        },
+                        _ => ()
+                    }
+                    inner_app = outer_app
+                }
+                inner_app
+            }
+        }
     }
 
     fn parse_atom(&mut self) -> Exp {
@@ -324,9 +386,9 @@ impl Parser {
         self.make_empty_exp_todo()
     }
 
-    // fn parse_application(&mut &self) -> Exp {
-        
-    // }
+    fn parse_application(&mut self) -> Exp {
+        self.make_empty_exp_todo()
+    }
 
     fn parse_type(&mut self) -> Type {
         Type::UnknownType

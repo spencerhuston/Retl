@@ -21,7 +21,7 @@
     | <ident>['.'<ident>]
 
 <param> ::= <ident>[':' <type>]
-<lambda> ::= '|'[<param>[','<param>]*]'|' '->' <type> '=' '{'<exp>'}'
+<lambda> ::= '|'[<param>[','<param>]*]'|' '->' <type> '{'<exp>'}'
 
 <app> ::= <atom>['('[<smp>[','<smp>]*]')']
 

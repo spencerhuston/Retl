@@ -3,49 +3,49 @@ use strum_macros::EnumString;
 #[derive(Debug, PartialEq, EnumString)]
 pub enum RawDelimiter {
     #[strum(serialize = ":")]
-    Colon(String),
+    Colon,
     #[strum(serialize = "=")]
-    Equal(String),
+    Equal,
     #[strum(serialize = "\\")]
-    Backslash(String),
+    Backslash,
     #[strum(serialize = ";")]
-    Semicolon(String),
+    Semicolon,
     #[strum(serialize = ".")]
-    Period(String),
+    Period,
     #[strum(serialize = ",")]
-    Comma(String),
+    Comma,
     #[strum(serialize = "+")]
-    Plus(String),
+    Plus,
     #[strum(serialize = "-")]
-    Hyphen(String),
+    Hyphen,
     #[strum(serialize = "*")]
-    Star(String),
+    Star,
     #[strum(serialize = "/")]
-    ForwardSlash(String),
+    ForwardSlash,
     #[strum(serialize = "%")]
-    Percent(String),
+    Percent,
     #[strum(serialize = "|")]
-    Pipe(String),
+    Pipe,
     #[strum(serialize = "!")]
-    Exclamation(String),
+    Exclamation,
     #[strum(serialize = "<")]
-    ArrowLeft(String),
+    ArrowLeft,
     #[strum(serialize = ">")]
-    ArrowRight(String),
+    ArrowRight,
     #[strum(serialize = "[")]
-    BracketLeft(String),
+    BracketLeft,
     #[strum(serialize = "]")]
-    BracketRight(String),
+    BracketRight,
     #[strum(serialize = "{")]
-    BraceLeft(String),
+    BraceLeft,
     #[strum(serialize = "}")]
-    BraceRight(String),
+    BraceRight,
     #[strum(serialize = "(")]
-    ParenLeft(String),
+    ParenLeft,
     #[strum(serialize = ")")]
-    ParenRight(String),
+    ParenRight,
     #[strum(serialize = "@")]
-    At(String),
+    At,
     #[strum(serialize = "$")]
-    DollarSign(String),
+    DollarSign,
 }

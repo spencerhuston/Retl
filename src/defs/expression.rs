@@ -7,8 +7,8 @@ use crate::defs::operator::Operator;
 
 #[derive(Debug)]
 pub struct ExpMeta {
-    exp_type: Type,
-    token: Token
+    pub(crate) exp_type: Type,
+    pub(crate) token: Token
 }
 
 #[derive(Display, Debug)]
@@ -46,8 +46,8 @@ pub struct Case {
 #[derive(Display, Debug)]
 pub enum Exp {
     Lit{lit: Literal, meta: ExpMeta},
-    Let{ident: String, let_type: Option<Type>, let_exp: Box<Exp>, after_exp: Option<Box<Exp>>, meta: ExpMeta},
-    Alias{ident: String, alias: Type, after_alias: Option<Box<Exp>>, meta: ExpMeta},
+    Let{ident: String, let_type: Type, let_exp: Box<Exp>, after_let_exp: Box<Option<Exp>>, meta: ExpMeta},
+    Alias{ident: String, alias: Type, after_alias: Box<Option<Exp>>, meta: ExpMeta},
     Lambda{params: Vec<Parameter>, return_type: Type, body: Box<Exp>, meta: ExpMeta},
     Application{ident: Box<Exp>, args: Vec<Exp>, meta: ExpMeta},
     Match{match_exp: Box<Exp>, cases: Vec<Case>, meta: ExpMeta},
@@ -58,5 +58,6 @@ pub enum Exp {
     TupleDef{values: Vec<Exp>},
     TupleAccess{ident: String, index: Literal},
     DictDef{mapping: HashMap<Exp, Exp>},
-    SchemaDef{mapping: HashMap<String, Type>}
+    SchemaDef{mapping: HashMap<String, Type>},
+    Empty
 }

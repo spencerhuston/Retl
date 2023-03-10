@@ -11,5 +11,6 @@ pub enum Type {
     TupleType{tuple_types: Vec<Type>},
     DictType{key_type: Box<Type>, value_type: Box<Type>},
     SchemaType,
-    FuncType{param_types: Vec<Type>, return_type: Box<Type>}
+    FuncType{param_types: Vec<Type>, return_type: Box<Type>},
+    UnknownType
 }

@@ -1,69 +1,69 @@
-use strum_macros::EnumString;
+use strum_macros::{EnumString, Display};
 
-#[derive(Debug, PartialEq, EnumString)]
+#[derive(Display, Debug, PartialEq, EnumString)]
 pub enum Keyword {
     #[strum(serialize = "let")]
-    Let(String),
+    Let,
     #[strum(serialize = "int")]
-    Int(String),
+    Int,
     #[strum(serialize = "bool")]
-    Bool(String),
+    Bool,
     #[strum(serialize = "char")]
-    Char(String),
+    Char,
     #[strum(serialize = "string")]
-    String(String),
+    String,
     #[strum(serialize = "null")]
-    Null(String),
+    Null,
     #[strum(serialize = "list")]
-    List(String),
+    List,
     #[strum(serialize = "dict")]
-    Dict(String),
+    Dict,
     #[strum(serialize = "tuple")]
-    Tuple(String),
+    Tuple,
     #[strum(serialize = "schema")]
-    Schema(String),
+    Schema,
     #[strum(serialize = "true")]
-    True(String),
+    True,
     #[strum(serialize = "false")]
-    False(String),
+    False,
     #[strum(serialize = "and")]
-    And(String),
+    And,
     #[strum(serialize = "or")]
-    Or(String),
+    Or,
     #[strum(serialize = "not")]
-    Not(String),
+    Not,
     #[strum(serialize = "parallel")]
-    Parallel(String),
+    Parallel,
     #[strum(serialize = "if")]
-    If(String),
+    If,
     #[strum(serialize = "else")]
-    Else(String),
+    Else,
     #[strum(serialize = "match")]
-    Match(String),
+    Match,
     #[strum(serialize = "case")]
-    Case(String),
+    Case,
     #[strum(serialize = "readln")]
-    Readln(String),
+    Readln,
     #[strum(serialize = "readCSV")]
-    ReadCSV(String),
+    ReadCSV,
     #[strum(serialize = "writeCSV")]
-    WriteCSV(String),
+    WriteCSV,
     #[strum(serialize = "print")]
-    Print(String),
+    Print,
     #[strum(serialize = "println")]
-    Println(String),
+    Println,
     #[strum(serialize = "map")]
-    Map(String),
+    Map,
     #[strum(serialize = "filter")]
-    Filter(String),
+    Filter,
     #[strum(serialize = "zip")]
-    Zip(String),
+    Zip,
     #[strum(serialize = "foldl")]
-    Foldl(String),
+    Foldl,
     #[strum(serialize = "foldr")]
-    Foldr(String),
+    Foldr,
     #[strum(serialize = "foreach")]
-    Foreach(String),
+    Foreach,
     #[strum(serialize = "range")]
-    Range(String)
+    Range
 }

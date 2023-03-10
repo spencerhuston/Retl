@@ -1,67 +1,67 @@
-use strum_macros::EnumString;
+use strum_macros::{EnumString, Display};
 
-#[derive(Debug, PartialEq, EnumString)]
+#[derive(Display, Debug, PartialEq, EnumString)]
 pub enum Delimiter {
     #[strum(serialize = ":")]
-    DenoteType(String),
+    DenoteType,
     #[strum(serialize = "->")]
-    ReturnType(String),
+    ReturnType,
     #[strum(serialize = "=")]
-    Assignment(String),
+    Assignment,
     #[strum(serialize = "\\")]
-    NewlineSlash(String),
+    NewlineSlash,
     #[strum(serialize = ";")]
-    StatementEnd(String),
+    StatementEnd,
     #[strum(serialize = "..")]
-    Range(String),
+    Range,
     #[strum(serialize = "+")]
-    Plus(String),
+    Plus,
     #[strum(serialize = "-")]
-    Minus(String),
+    Minus,
     #[strum(serialize = "*")]
-    Multiply(String),
+    Multiply,
     #[strum(serialize = "/")]
-    Divide(String),
+    Divide,
     #[strum(serialize = "%")]
-    Modulus(String),
+    Modulus,
     #[strum(serialize = ">")]
-    GreaterThan(String),
+    GreaterThan,
     #[strum(serialize = "<")]
-    LessThan(String),
+    LessThan,
     #[strum(serialize = ">=")]
-    GreaterThanEqualTo(String),
+    GreaterThanEqualTo,
     #[strum(serialize = "<=")]
-    LessThanEqualTo(String),
+    LessThanEqualTo,
     #[strum(serialize = "==")]
-    Equal(String),
+    Equal,
     #[strum(serialize = "!")]
-    Not(String),
+    Not,
     #[strum(serialize = "++")]
-    ListConcat(String),
+    ListConcat,
     #[strum(serialize = "|")]
-    LambdaSig(String),
+    LambdaSig,
     #[strum(serialize = "(")]
-    ParenLeft(String),
+    ParenLeft,
     #[strum(serialize = ")")]
-    ParenRight(String),
+    ParenRight,
     #[strum(serialize = "[")]
-    BracketLeft(String),
+    BracketLeft,
     #[strum(serialize = "]")]
-    BracketRight(String),
+    BracketRight,
     #[strum(serialize = "{")]
-    BraceLeft(String),
+    BraceLeft,
     #[strum(serialize = "}")]
-    BraceRight(String),
+    BraceRight,
     #[strum(serialize = ".")]
-    TupleAccess(String),
+    TupleAccess,
     #[strum(serialize = ",")]
-    Comma(String),
+    Comma,
     #[strum(serialize = "_")]
-    CatchallCase(String),
+    CatchallCase,
     #[strum(serialize = "=>")]
-    CaseExp(String),
+    CaseExp,
     #[strum(serialize = "|>")]
-    Bird(String),
+    Bird,
     #[strum(serialize = "$")]
-    SchemaStart(String)
+    SchemaStart
 }

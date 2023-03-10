@@ -1,9 +1,12 @@
 use strum_macros::{EnumString, Display};
+use crate::defs::operator::Operator;
 
-#[derive(Display, Debug, PartialEq, EnumString, Clone)]
+#[derive(Display, Debug, PartialEq, Eq, EnumString, Clone)]
 pub enum Keyword {
     #[strum(serialize = "let")]
     Let,
+    #[strum(serialize = "alias")]
+    Alias,
     #[strum(serialize = "int")]
     Int,
     #[strum(serialize = "bool")]
@@ -66,4 +69,14 @@ pub enum Keyword {
     Foreach,
     #[strum(serialize = "range")]
     Range
+}
+
+impl Keyword {
+    pub fn to_operator(&self) -> Option<Operator> {
+        match *self {
+            Keyword::And => Some(Operator::And),
+            Keyword::Or => Some(Operator::Or),
+            _ => None
+        }
+    }
 }

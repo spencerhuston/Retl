@@ -12,7 +12,7 @@ use crate::utils::file_position::FilePosition;
 use crate::scanner::token::Token;
 
 pub struct Scanner {
-    tokens: Vec<Token>
+    pub tokens: Vec<Token>
 }
 
 fn is_valid_character(c: &char, inside_quotes: &bool) -> bool {

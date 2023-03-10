@@ -1,67 +1,81 @@
 use strum_macros::Display;
 
-#[derive(Display, Debug)]
+#[derive(Display, Debug, Eq, PartialEq, Clone)]
 pub enum Operator {
     #[strum(serialize = "+")]
-    Plus(String),
+    Plus,
     #[strum(serialize = "-")]
-    Minus(String),
+    Minus,
     #[strum(serialize = "*")]
-    Multiply(String),
+    Multiply,
     #[strum(serialize = "/")]
-    Divide(String),
+    Divide,
     #[strum(serialize = "%")]
-    Modulus(String),
+    Modulus,
     #[strum(serialize = ">")]
-    GreaterThan(String),
+    GreaterThan,
     #[strum(serialize = "<")]
-    LessThan(String),
+    LessThan,
     #[strum(serialize = ">=")]
-    GreaterThanEqualTo(String),
+    GreaterThanEqualTo,
     #[strum(serialize = "<=")]
-    LessThanEqualTo(String),
+    LessThanEqualTo,
     #[strum(serialize = "==")]
-    Equal(String),
+    Equal,
     #[strum(serialize = "not")]
-    Not(String),
+    Not,
     #[strum(serialize = "and")]
-    And(String),
+    And,
     #[strum(serialize = "or")]
-    Or(String),
+    Or,
     #[strum(serialize = "++")]
-    CollectionConcat(String)
+    CollectionConcat
 }
 
 impl Operator {
     pub fn is_arithmetic_op(&self) -> bool {
         match *self {
-            Operator::Plus(_) | 
-            Operator::Minus(_) | 
-            Operator::Multiply(_) | 
-            Operator::Divide(_) | 
-            Operator::Modulus(_) => true,
+            Operator::Plus | 
+            Operator::Minus | 
+            Operator::Multiply | 
+            Operator::Divide | 
+            Operator::Modulus => true,
             _ => false
         }
     }
 
     pub fn is_boolean_op(&self) -> bool {
         match *self {
-            Operator::GreaterThan(_) | 
-            Operator::LessThan(_) | 
-            Operator::GreaterThanEqualTo(_) | 
-            Operator::LessThanEqualTo(_) | 
-            Operator::Equal(_) | 
-            Operator::Not(_) | 
-            Operator::And(_) | 
-            Operator::Or(_) => true,
+            Operator::GreaterThan | 
+            Operator::LessThan | 
+            Operator::GreaterThanEqualTo | 
+            Operator::LessThanEqualTo | 
+            Operator::Equal | 
+            Operator::Not | 
+            Operator::And | 
+            Operator::Or => true,
             _ => false
         }
     }
 
-    pub fn is_unary_op(&self) -> bool {
+    pub fn is_collection_op(&self) -> bool {
         match *self {
-            Operator::Minus(_) | Operator::Not(_) => true,
+            Operator::CollectionConcat => true,
             _ => false
         }
+    }
+
+    pub fn get_precedence(&self) -> i32 {
+        match *self {
+            Operator::And | Operator::Or | Operator::CollectionConcat => 0,
+            Operator::Plus | Operator::Minus => 2,
+            Operator::Multiply | Operator::Divide | Operator::Modulus => 3,
+            _ => 1
+        }
+    }
+
+    pub fn is_binary_op(&self, min: i32) -> bool {
+        (self.is_boolean_op() || self.is_arithmetic_op() || self.is_collection_op()) &&
+            self.get_precedence() >= min
     }
 }

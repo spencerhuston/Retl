@@ -6,9 +6,10 @@ use crate::defs::retl_type::Type;
 use crate::defs::operator::Operator;
 
 #[derive(Debug)]
-pub struct ExpMeta {
-    pub(crate) exp_type: Type,
-    pub(crate) token: Token
+pub struct Exp {
+    pub exp: Expression,
+    pub exp_type: Type,
+    pub token: Token
 }
 
 #[derive(Display, Debug)]
@@ -39,21 +40,20 @@ pub enum Pattern {
 #[derive(Debug)]
 pub struct Case {
     pattern: Pattern,
-    case_exp: Exp,
-    meta: ExpMeta
+    case_exp: Exp
 }
 
 #[derive(Display, Debug)]
-pub enum Exp {
-    Lit{lit: Literal, meta: ExpMeta},
-    Let{ident: String, let_type: Type, let_exp: Box<Exp>, after_let_exp: Box<Option<Exp>>, meta: ExpMeta},
-    Alias{ident: String, alias: Type, after_alias: Box<Option<Exp>>, meta: ExpMeta},
-    Lambda{params: Vec<Parameter>, return_type: Type, body: Box<Exp>, meta: ExpMeta},
-    Application{ident: Box<Exp>, args: Vec<Exp>, meta: ExpMeta},
-    Match{match_exp: Box<Exp>, cases: Vec<Case>, meta: ExpMeta},
-    Primitive{operator: Operator, left: Box<Exp>, right: Box<Exp>, meta: ExpMeta},
+pub enum Expression {
+    Lit{lit: Literal},
+    Let{ident: String, let_type: Type, let_exp: Box<Exp>, after_let_exp: Box<Option<Exp>>},
+    Alias{ident: String, alias: Type, after_alias_exp: Box<Option<Exp>>},
+    Lambda{params: Vec<Parameter>, return_type: Type, body: Box<Exp>},
+    Application{ident: Box<Exp>, args: Vec<Exp>},
+    Match{match_exp: Box<Exp>, cases: Vec<Case>},
+    Primitive{operator: Operator, left: Box<Exp>, right: Box<Exp>},
     Reference{ident: String},
-    Branch{condition: Box<Exp>, if_branch: Box<Exp>, else_branch: Box<Exp>},
+    Branch{condition: Box<Exp>, if_branch: Box<Exp>, else_branch: Box<Option<Exp>>},
     ListDef{values: Vec<Exp>},
     TupleDef{values: Vec<Exp>},
     TupleAccess{ident: String, index: Literal},

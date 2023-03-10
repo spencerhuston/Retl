@@ -45,6 +45,7 @@ fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
     let scanner = &mut Scanner::init();
     scanner.scan(&script);
     let parser = &mut RetlParser::init();
+    parser.parse(&scanner.tokens);
     Ok(())
 }
 

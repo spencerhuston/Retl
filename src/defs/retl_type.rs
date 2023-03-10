@@ -1,6 +1,6 @@
-use strum_macros::Display;
+use strum_macros::{EnumString, Display};
 
-#[derive(Display, Debug)]
+#[derive(Display, Debug, Clone, PartialEq, Eq)]
 pub enum Type {
     IntType,
     BoolType,

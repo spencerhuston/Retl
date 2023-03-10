@@ -1,6 +1,6 @@
 use log::{debug, error};
 use std::borrow::Borrow;
-use std::cell::Ref;
+use std::collections::HashMap;
 
 use crate::scanner::token::{make_empty_token, Token};
 use crate::defs::keyword::Keyword;
@@ -164,7 +164,7 @@ impl Parser {
             Token::Keyword{..}
                 if self.match_optional_keyword(Keyword::Let)
                     => self.parse_let(),
-            _ => self.make_empty_exp_todo()
+            _ => self.parse_simple_expression()
         }
     }
 
@@ -319,15 +319,12 @@ impl Parser {
             _ => {
                 let mut inner_app = self.parse_application();
                 while self.match_optional_delimiter(Delimiter::Bird) {
-                    let outer_app = self.parse_application();
-                    // TODO: throw error if outer app is not application expression
-                    match outer_app.exp.clone() {
-                        Expression::Application{ident, mut args } => {
-                            let mut temp_args = vec![inner_app];
-                            temp_args.append(&mut args);
-                            args = temp_args
+                    let mut outer_app = self.parse_application();
+                    match &mut outer_app.exp {
+                        Expression::Application{ident: _, ref mut args} => {
+                            args.insert(0, inner_app);
                         },
-                        _ => ()
+                        _ => () // TODO: throw error if outer app is not application expression
                     }
                     inner_app = outer_app
                 }
@@ -340,7 +337,7 @@ impl Parser {
         match self.parse_literal().exp {
             Expression::Lit{lit} => {
                 match lit {
-                    Literal::IntLit{literal} => literal,
+                    IntLit{literal} => literal,
                     _ => -1 // TODO: Throw error here
                 }
             },
@@ -445,7 +442,7 @@ impl Parser {
         if self.match_optional_keyword(Keyword::Else) {
             self.match_required_delimiter(Delimiter::BraceLeft);
             else_branch = Some(self.parse_simple_expression());
-            self.match_required_delimiter(Delimiter::BraceRight)
+            self.match_required_delimiter(Delimiter::BraceRight);
         }
         let exp_type = if_branch.exp_type.clone();
         
@@ -461,6 +458,41 @@ impl Parser {
     }
     
     fn parse_collection_def(&mut self) -> Exp {
+        let token = self.curr().clone();
+        let first_element = self.parse_simple_expression();
+
+        if self.match_optional_delimiter(Delimiter::Comma) {
+            let mut elements: Vec<Exp> = vec![first_element, self.parse_simple_expression()];
+            while self.match_optional_delimiter(Delimiter::Comma) &&
+                !self.match_optional_delimiter(Delimiter::BracketRight) {
+                elements.push(self.parse_simple_expression())
+            }
+            Exp{
+                exp: Expression::ListDef{values: elements},
+                exp_type: ListType{list_type: Box::new(UnknownType)},
+                token
+            }
+        } else if self.match_optional_delimiter(Delimiter::DenoteType) {
+            let mut mapping: HashMap<Exp, Exp> = HashMap::new();
+            mapping.insert(first_element, self.parse_simple_expression());
+
+            while self.match_optional_delimiter(Delimiter::Comma) &&
+                !self.match_optional_delimiter(Delimiter::BracketRight) {
+                let key = self.parse_simple_expression();
+                self.match_required_delimiter(Delimiter::DenoteType);
+                let value = self.parse_simple_expression();
+                mapping.insert(key, value)
+            }
+            Exp{
+                exp: Expression::DictDef{mapping},
+                exp_type: DictType{
+                    key_type: Box::new(UnknownType),
+                    value_type: Box::new(UnknownType)
+                },
+                token
+            }
+        }
+
         self.make_empty_exp_todo()
     }
     
@@ -469,7 +501,23 @@ impl Parser {
     }
 
     fn parse_schema_def(&mut self) -> Exp {
-        self.make_empty_exp_todo()
+        let token = self.curr().clone();
+        self.match_required_delimiter(Delimiter::BraceLeft);
+        let mut mapping: HashMap<String, Type> = HashMap::new();
+
+        while self.match_optional_delimiter(Delimiter::Comma) && // TODO: Make function for this operation
+            !self.match_optional_delimiter(Delimiter::BraceRight) {
+            let ident = self.match_ident();
+            self.match_required_delimiter(Delimiter::DenoteType);
+            let col_type = self.parse_type();
+            mapping.insert(ident, col_type)
+        }
+
+        Exp {
+            exp: Expression::SchemaDef{mapping},
+            exp_type: SchemaType,
+            token
+        }
     }
     
     fn parse_match(&mut self) -> Exp {
@@ -480,8 +528,37 @@ impl Parser {
         self.make_empty_exp_todo()
     }
 
+    fn parse_arguments(&mut self) -> Vec<Exp> {
+        let mut args: Vec<Exp> = vec![self.parse_simple_expression()];
+        while self.match_optional_delimiter(Delimiter::Comma) &&
+            !self.match_optional_delimiter(Delimiter::ParenRight) {
+            args.push(self.parse_simple_expression())
+        }
+        args
+    }
+
     fn parse_application(&mut self) -> Exp {
-        self.make_empty_exp_todo()
+        let token = self.curr().clone();
+        let ident: Exp = self.parse_atom();
+
+        match ident.exp {
+            Expression::Lit{..} => ident,
+            _ => {
+                self.match_required_delimiter(Delimiter::ParenLeft);
+                let args: Vec<Exp> = self.parse_arguments();
+                let mut app = Exp{
+                    exp: Expression::Application{ident: Box::new(ident), args},
+                    exp_type: UnknownType,
+                    token
+                };
+
+                while self.match_optional_delimiter(Delimiter::ParenLeft) {
+                    let outer_args = self.parse_arguments();
+                    app.exp = Expression::Application{ident: Box::new(app.clone()), args: outer_args}
+                }
+                app
+            }
+        }
     }
 
     fn parse_type(&mut self) -> Type {

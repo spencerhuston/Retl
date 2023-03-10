@@ -16,7 +16,7 @@ pub struct Exp {
 pub enum Literal {
     IntLit{literal: i32},
     BoolLit{literal: bool},
-    CharLit{literal: char},
+    CharLit{literal: String},
     StringLit{literal: String},
     NullLit
 }
@@ -56,7 +56,7 @@ pub enum Expression {
     Branch{condition: Box<Exp>, if_branch: Box<Exp>, else_branch: Box<Option<Exp>>},
     ListDef{values: Vec<Exp>},
     TupleDef{values: Vec<Exp>},
-    TupleAccess{ident: String, index: Literal},
+    TupleAccess{ident: Box<Exp>, index: i32},
     DictDef{mapping: HashMap<Exp, Exp>},
     SchemaDef{mapping: HashMap<String, Type>},
     Empty

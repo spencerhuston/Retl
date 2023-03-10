@@ -1,14 +1,15 @@
 use log::{debug, error};
 use std::borrow::Borrow;
+use std::cell::Ref;
 
 use crate::scanner::token::{make_empty_token, Token};
 use crate::defs::keyword::Keyword;
 use crate::defs::delimiter::Delimiter;
 use crate::defs::expression::{Exp, Expression, Literal};
-use crate::defs::expression::Expression::Primitive;
+use crate::defs::expression::Literal::*;
 use crate::defs::operator::Operator;
 use crate::defs::retl_type::Type;
-use crate::defs::retl_type::Type::{NullType, UnknownType};
+use crate::defs::retl_type::Type::*;
 
 pub struct Parser {
     root_exp: Exp,
@@ -117,9 +118,12 @@ impl Parser {
         matched
     }
 
-    fn match_ident(&self) -> String {
+    fn match_ident(&mut self) -> String {
         match self.curr() {
-            Token::Ident{ident, fp: _} => ident,
+            Token::Ident{ident, fp: _} => {
+                self.advance();
+                ident
+            },
             _ => {
                 error!("Expected identifier, got {}",
                     get_token_as_string(self.tokens[self.index].clone()));
@@ -168,7 +172,7 @@ impl Parser {
         let token = self.curr();
         let ident = self.match_ident();
         
-        let mut let_type = Type::UnknownType;
+        let mut let_type = UnknownType;
         if self.match_optional_delimiter(Delimiter::DenoteType) {
             let_type = self.parse_type()
         }
@@ -253,7 +257,7 @@ impl Parser {
             self.advance();
             let right = self.parse_utight_with_min(temp_min);
             left = Exp{
-                exp: Primitive{
+                exp: Expression::Primitive{
                     operator,
                     left: Box::new(left),
                     right: Box::new(right)},
@@ -276,7 +280,7 @@ impl Parser {
         let right = self.parse_tight();
         match operator {
             Some(Operator::Not) => Exp{
-                exp: Primitive{
+                exp: Expression::Primitive{
                     operator: Operator::And,
                     left: Box::new(Exp{
                         exp: Expression::Lit{lit: Literal::BoolLit{literal: false}},
@@ -288,7 +292,7 @@ impl Parser {
                 token: token.clone()
             },
             Some(Operator::Minus) => Exp{
-                exp: Primitive{
+                exp: Expression::Primitive{
                     operator: Operator::Minus,
                     left: Box::new(Exp{
                         exp: Expression::Lit{lit: Literal::IntLit{literal: 0}},
@@ -304,7 +308,6 @@ impl Parser {
     }
 
     fn parse_tight(&mut self) -> Exp {
-        let token = self.curr();
         match self.curr() {
             Token::Delimiter{..}
                 if self.match_optional_delimiter(Delimiter::BraceLeft)
@@ -333,12 +336,100 @@ impl Parser {
         }
     }
 
-    fn parse_atom(&mut self) -> Exp {
-        self.make_empty_exp_todo()
+    fn parse_access_index(&mut self) -> i32 {
+        match self.parse_literal().exp {
+            Expression::Lit{lit} => {
+                match lit {
+                    Literal::IntLit{literal} => literal,
+                    _ => -1 // TODO: Throw error here
+                }
+            },
+            _ => -1 // TODO: Throw error here
+        }
     }
 
-    fn parse_primitive(&mut self) -> Exp {
-        self.make_empty_exp_todo()
+    fn parse_atom(&mut self) -> Exp {
+        match self.curr() {
+            Token::Ident{ident, fp: _} => {
+                let reference = Exp{
+                    exp: Expression::Reference{ident},
+                    exp_type: UnknownType,
+                    token: self.curr().clone()
+                };
+
+                self.advance();
+
+                if self.match_optional_delimiter(Delimiter::TupleAccess) {
+                    let token = self.curr().clone();
+                    let access_index = self.parse_access_index();
+                    let mut tuple_access = Exp{
+                        exp: Expression::TupleAccess{
+                            ident: Box::new(reference),
+                            index: access_index
+                        },
+                        exp_type: UnknownType,
+                        token: token.clone()
+                    };
+
+                    while self.match_optional_delimiter(Delimiter::TupleAccess) {
+                        tuple_access.exp = Expression::TupleAccess{
+                            ident: Box::new(tuple_access.clone()),
+                            index: self.parse_access_index()
+                        }
+                    }
+                    tuple_access
+                } else {
+                    reference
+                }
+            },
+            _ => self.parse_literal()
+        }
+    }
+
+    fn parse_literal(&mut self) -> Exp {
+        let token = self.curr();
+        match self.curr() {
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::True)
+                => Exp{
+                    exp: Expression::Lit{lit: BoolLit{literal: true}},
+                    exp_type: BoolType,
+                    token: token.clone()
+                },
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::False)
+                => Exp{
+                    exp: Expression::Lit{lit: BoolLit{literal: false}},
+                    exp_type: BoolType,
+                    token: token.clone()
+                },
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::Null)
+                => Exp{
+                    exp: Expression::Lit{lit: NullLit},
+                    exp_type: NullType,
+                    token: token.clone()
+                },
+            Token::Value{value, fp: _} => {
+                if value.starts_with('\'') {
+                    Exp{
+                        exp: Expression::Lit{lit: CharLit{literal: value}},
+                        exp_type: CharType,
+                        token: token.clone()
+                    }
+                } else if value.starts_with('\"') {
+                    Exp{
+                        exp: Expression::Lit{lit: StringLit{literal: value}},
+                        exp_type: StringType,
+                        token: token.clone()
+                    }
+                } else {
+                    Exp{
+                        exp: Expression::Lit{lit: IntLit{literal: value.parse().unwrap()}},
+                        exp_type: IntType,
+                        token: token.clone()
+                    }
+                }
+            }
+            _ => self.make_empty_exp_todo() // TODO: Throw error here
+        }
     }
     
     fn parse_branch(&mut self) -> Exp {

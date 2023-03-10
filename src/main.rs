@@ -42,9 +42,9 @@ fn read_retl_file(path_buf: &PathBuf) -> Result<String, Box<dyn Error>> {
 }
 
 fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
-    let scanner = &mut Scanner { tokens: vec![] };
+    let scanner = &mut Scanner::init();
     scanner.scan(&script);
-    let parser = &mut RetlParser{ root_exp: defs::expression::Exp::Empty, tokens: vec![], index: 0, dummy_count: 0, anon_count: 0};
+    let parser = &mut RetlParser::init();
     Ok(())
 }
 

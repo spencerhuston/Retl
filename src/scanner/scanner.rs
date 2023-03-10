@@ -12,7 +12,7 @@ use crate::utils::file_position::FilePosition;
 use crate::scanner::token::Token;
 
 pub struct Scanner {
-    pub(crate) tokens: Vec<Token>
+    tokens: Vec<Token>
 }
 
 fn is_valid_character(c: &char, inside_quotes: &bool) -> bool {
@@ -99,6 +99,10 @@ fn token_adjusted_fp(file_pos: &FilePosition, token: &String) -> FilePosition {
 }
 
 impl Scanner {
+    pub fn init() -> Scanner {
+        Scanner{ tokens: vec![] }
+    }
+
     fn push_delim_token(&mut self, token: &String, file_pos: &FilePosition) {
         if token.is_empty() {
             return;
@@ -154,7 +158,7 @@ impl Scanner {
                 }
             },
             Right(d) => {
-                if is_delim(&d.borrow()) {
+                if is_delim(&d.to_string()) {
                     self.push_delim_token(d, file_pos)
                 } else {
                     self.push_delim_token(&d.substring(0, 1).to_string(), file_pos);
@@ -165,9 +169,7 @@ impl Scanner {
     }
 
     pub fn scan(&mut self, script: &String) {
-        println!("====================");
-        println!("{}", script);
-        println!("====================");
+        debug!("====================\n{}\n====================", script);
 
         let lines = script.lines();
         let text: Vec<char> = script.chars().collect();

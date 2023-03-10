@@ -1,6 +1,6 @@
 use strum_macros::{EnumString, Display};
 
-#[derive(Display, Debug, PartialEq, EnumString)]
+#[derive(Display, Debug, PartialEq, EnumString, Clone)]
 pub enum Keyword {
     #[strum(serialize = "let")]
     Let,

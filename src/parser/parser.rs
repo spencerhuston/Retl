@@ -481,7 +481,7 @@ impl Parser {
                 let key = self.parse_simple_expression();
                 self.match_required_delimiter(Delimiter::DenoteType);
                 let value = self.parse_simple_expression();
-                mapping.insert(key, value)
+                mapping.insert(key, value);
             }
             Exp{
                 exp: Expression::DictDef{mapping},
@@ -491,9 +491,10 @@ impl Parser {
                 },
                 token
             }
+        } else {
+            // TODO: Throw error here, not a valid list
+            first_element
         }
-
-        self.make_empty_exp_todo()
     }
     
     fn parse_tuple_def(&mut self) -> Exp {
@@ -510,7 +511,7 @@ impl Parser {
             let ident = self.match_ident();
             self.match_required_delimiter(Delimiter::DenoteType);
             let col_type = self.parse_type();
-            mapping.insert(ident, col_type)
+            mapping.insert(ident, col_type);
         }
 
         Exp {
@@ -562,6 +563,55 @@ impl Parser {
     }
 
     fn parse_type(&mut self) -> Type {
-        Type::UnknownType
+        let first_type = match self.curr() {
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::Int) => IntType,
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::Bool) => BoolType,
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::Char) => CharType,
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::String) => StringType,
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::Null) => NullType,
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::List) => {
+                self.match_required_delimiter(Delimiter::BracketLeft);
+                let list_type = self.parse_type();
+                self.match_required_delimiter(Delimiter::BracketRight);
+                ListType{list_type: Box::new(list_type)}
+            },
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::Dict) => {
+                self.match_required_delimiter(Delimiter::BracketLeft);
+                let key_type = self.parse_type();
+                self.match_required_delimiter(Delimiter::DenoteType);
+                let value_type = self.parse_type();
+                self.match_required_delimiter(Delimiter::BracketRight);
+                DictType{key_type: Box::new(key_type), value_type: Box::new(value_type)}
+            },
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::Tuple) => {
+                self.match_required_delimiter(Delimiter::BracketLeft);
+                let mut tuple_types = vec![self.parse_type()];
+
+                while self.match_optional_delimiter(Delimiter::Comma) &&
+                    !self.match_optional_delimiter(Delimiter::BracketRight) {
+                    tuple_types.push(self.parse_type())
+                }
+                TupleType{tuple_types}
+            },
+            Token::Keyword{..} if self.match_optional_keyword(Keyword::Schema) => SchemaType,
+            Token::Delimiter{..} if self.match_optional_delimiter(Delimiter::ParenLeft) => {
+                let mut param_types = vec![self.parse_type()];
+                while self.match_optional_delimiter(Delimiter::Comma) &&
+                    !self.match_optional_delimiter(Delimiter::ParenRight) {
+                    param_types.push(self.parse_type())
+                }
+
+                self.match_required_delimiter(Delimiter::ReturnType);
+                let return_type = self.parse_type();
+                FuncType{param_types, return_type: Box::new(return_type)}
+            }
+            _ => UnknownType // TODO: Throw error here
+        };
+
+        if self.match_optional_delimiter(Delimiter::ReturnType) {
+            FuncType{param_types: vec![first_type], return_type: Box::new(self.parse_type())}
+        } else {
+            first_type
+        }
     }
 }

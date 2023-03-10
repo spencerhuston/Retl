@@ -1,4 +1,4 @@
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FilePosition {
     pub(crate) line: usize,
     pub(crate) column: usize,

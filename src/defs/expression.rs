@@ -23,9 +23,9 @@ pub enum Literal {
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Parameter {
-    ident: String, 
-    param_type: Option<Type>,
-    token: Token
+    pub ident: String,
+    pub param_type: Type,
+    pub token: Token
 }
 
 #[derive(Display, Debug, Clone, Eq, PartialEq)]

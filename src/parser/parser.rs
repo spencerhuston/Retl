@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::scanner::token::{make_empty_token, Token};
 use crate::defs::keyword::Keyword;
 use crate::defs::delimiter::Delimiter;
-use crate::defs::expression::{Exp, Expression, Literal};
+use crate::defs::expression::{Exp, Expression, Literal, Parameter};
 use crate::defs::expression::Literal::*;
 use crate::defs::operator::Operator;
 use crate::defs::retl_type::Type;
@@ -361,7 +361,7 @@ impl Parser {
             Token::Delimiter{..}
                 if self.match_optional_delimiter(Delimiter::BraceLeft)
                     => {
-                let exp = self.parse_simple_expression();
+                let exp = self.parse_expression();
                 self.match_required_delimiter(Delimiter::BraceRight);
                 exp
             },
@@ -622,9 +622,70 @@ impl Parser {
     fn parse_match(&mut self) -> Exp {
         self.make_empty_exp_todo()
     }
+
+    fn parse_parameter(&mut self) -> Parameter {
+        let token = self.curr().clone();
+        let ident = self.match_ident();
+        let mut param_type = UnknownType;
+        if self.match_optional_delimiter(Delimiter::DenoteType) {
+            param_type = self.parse_type();
+        }
+        Parameter{ident, param_type, token}
+    }
     
     fn parse_lambda(&mut self) -> Exp {
-        self.make_empty_exp_todo()
+        let token = self.curr().clone();
+        let mut params: Vec<Parameter> = vec![];
+        if !self.match_optional_delimiter(Delimiter::LambdaSig) {
+            while self.match_optional_delimiter(Delimiter::Comma) &&
+                !self.match_optional_delimiter(Delimiter::LambdaSig) {
+                params.push(self.parse_parameter());
+            }
+        }
+
+        self.match_required_delimiter(Delimiter::ReturnType);
+        let return_type = self.parse_type();
+        self.match_required_delimiter(Delimiter::BraceLeft);
+        let body = self.parse_expression();
+        self.match_required_delimiter(Delimiter::BraceRight);
+
+        let mut param_types: Vec<Type> = vec![];
+        for p in params.iter() {
+            param_types.push(p.param_type.clone())
+        }
+        let func_type = FuncType{
+            param_types,
+            return_type: Box::new(return_type.clone())
+        };
+
+        let lambda = Exp{
+            exp: Expression::Lambda{
+                params,
+                return_type: return_type.clone(),
+                body: Box::new(body)
+            },
+            exp_type: func_type.clone(),
+            token: token.clone()
+        };
+        let ident = self.dummy();
+        let let_type = func_type.clone();
+        let let_exp = lambda;
+        let after_let_exp = Exp{
+            exp: Expression::Reference{ident: ident.clone()},
+            exp_type: func_type.clone(),
+            token: token.clone()
+        };
+
+        Exp{
+            exp: Expression::Let{
+                ident,
+                let_type,
+                let_exp: Box::new(let_exp),
+                after_let_exp: Box::new(Some(after_let_exp))
+            },
+            exp_type: func_type,
+            token
+        }
     }
 
     fn parse_arguments(&mut self) -> Vec<Exp> {

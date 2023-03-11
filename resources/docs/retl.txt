@@ -1,6 +1,8 @@
 TODO:
+- Parse lambda
+- Parse match
+- Parse list and dict access with [ ]
 - Parser error messages
-- List and dict access with [ ]
 - Parallel keyword
 - Add function for parsing lists
 - Add more typing in parsing phase
@@ -18,7 +20,6 @@ FEATURES:
 4. basic pattern matching
 - multi-choice: |
 - range: ..
-- named pattern: {name}@{value}
 - predicates
 5. if/else
 6. builtin-functions for ETL, functions passed in are denoted code-blocks:
@@ -36,7 +37,6 @@ FEATURES:
 - range
 7. collection operators
 - list append operator: ++
-- list/dict/tuple equality operator: ===
 - list/dict access operator: []
 - tuple access operator: .
 8. REPL

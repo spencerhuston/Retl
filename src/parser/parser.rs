@@ -95,6 +95,7 @@ impl Parser {
     }
 
     fn curr(&self) -> Token {
+        println!("curr: {:?}", self.tokens[self.index].clone());
         self.tokens[self.index].clone()
     }
 
@@ -103,8 +104,8 @@ impl Parser {
     }
 
     fn match_required_delimiter(&mut self, delim: Delimiter) -> bool {
-        let matched = match self.tokens[self.index].borrow() {
-            Token::Delimiter{delim: d, fp: _, .. } if *d == delim => true,
+        let matched = match self.curr() {
+            Token::Delimiter{delim: d, fp: _, .. } if d == delim => true,
             _ => false
         };
 
@@ -112,6 +113,8 @@ impl Parser {
             error!("Expected {:?}, got {}",
                 delim,
                 get_token_as_string(self.tokens[self.index].clone()))
+        } else {
+            println!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
         }
 
         self.advance();
@@ -119,8 +122,8 @@ impl Parser {
     }
 
     fn match_required_keyword(&mut self, keyword: Keyword) -> bool {
-        let matched = match self.tokens[self.index].borrow() {
-            Token::Keyword{keyword: k, fp: _, .. } if *k == keyword => true,
+        let matched = match self.curr() {
+            Token::Keyword{keyword: k, fp: _, .. } if k == keyword => true,
             _ => false
         };
 
@@ -128,6 +131,8 @@ impl Parser {
             error!("Expected {:?}, got {}",
                 keyword,
                 get_token_as_string(self.tokens[self.index].clone()))
+        } else {
+            println!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
         }
 
         self.advance();
@@ -135,23 +140,29 @@ impl Parser {
     }
 
     fn match_optional_delimiter(&mut self, delim: Delimiter) -> bool {
-        let matched = match self.tokens[self.index].borrow() {
-            Token::Delimiter{delim: d, fp: _, .. } if *d == delim => true,
+        let matched = match self.curr() {
+            Token::Delimiter{delim: d, fp: _, .. } if d == delim => true,
             _ => false
         };
 
-        if matched { self.advance() }
+        if matched {
+            println!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
+            self.advance()
+        }
 
         matched
     }
 
     fn match_optional_keyword(&mut self, keyword: Keyword) -> bool {
-        let matched = match self.tokens[self.index].borrow() {
-            Token::Keyword{keyword: k, fp: _, .. } if *k == keyword => true,
+        let matched = match self.curr() {
+            Token::Keyword{keyword: k, fp: _, .. } if k == keyword => true,
             _ => false
         };
 
-        if matched { self.advance() }
+        if matched {
+            println!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
+            self.advance()
+        }
 
         matched
     }
@@ -159,6 +170,7 @@ impl Parser {
     fn match_ident(&mut self) -> String {
         match self.curr() {
             Token::Ident{ident, fp: _} => {
+                println!("MATCHED IDENT: curr {:?}, ident {:?}", self.curr(), ident);
                 self.advance();
                 ident
             },
@@ -425,31 +437,39 @@ impl Parser {
         let token = self.curr();
         match self.curr() {
             Token::Keyword{..} if self.match_optional_keyword(Keyword::True)
-                => Exp{
-                    exp: Expression::Lit{lit: BoolLit{literal: true}},
-                    exp_type: BoolType,
-                    token: token.clone()
-                },
+                => {
+                    Exp{
+                        exp: Expression::Lit{lit: BoolLit{literal: true}},
+                        exp_type: BoolType,
+                        token: token.clone()
+                    }
+            },
             Token::Keyword{..} if self.match_optional_keyword(Keyword::False)
-                => Exp{
-                    exp: Expression::Lit{lit: BoolLit{literal: false}},
-                    exp_type: BoolType,
-                    token: token.clone()
-                },
+                => {
+                    Exp{
+                        exp: Expression::Lit{lit: BoolLit{literal: false}},
+                        exp_type: BoolType,
+                        token: token.clone()
+                    }
+            },
             Token::Keyword{..} if self.match_optional_keyword(Keyword::Null)
-                => Exp{
-                    exp: Expression::Lit{lit: NullLit},
-                    exp_type: NullType,
-                    token: token.clone()
-                },
+                => {
+                    Exp{
+                        exp: Expression::Lit{lit: NullLit},
+                        exp_type: NullType,
+                        token: token.clone()
+                    }
+            },
             Token::Value{value, fp: _} => {
                 if value.starts_with('\'') {
+                    self.advance();
                     Exp{
                         exp: Expression::Lit{lit: CharLit{literal: value}},
                         exp_type: CharType,
                         token: token.clone()
                     }
                 } else if value.starts_with('\"') {
+                    self.advance();
                     Exp{
                         exp: Expression::Lit{lit: StringLit{literal: value}},
                         exp_type: StringType,
@@ -461,6 +481,7 @@ impl Parser {
                         exp_type: IntType,
                         token: token.clone()
                     };
+                    self.advance();
                     if self.match_optional_delimiter(Delimiter::Range) {
                         let int_literal_range_bound_noninclusive = self.parse_literal();
                         let range_start = get_int_literal_value(int_literal.exp.clone());
@@ -501,7 +522,7 @@ impl Parser {
             else_branch = Some(self.parse_simple_expression());
             self.match_required_delimiter(Delimiter::BraceRight);
         }
-        let exp_type = if_branch.exp_type.clone();
+        let exp_type = if else_branch == None { NullType } else { if_branch.exp_type.clone() };
         
         Exp{
             exp: Expression::Branch{

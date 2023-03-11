@@ -1,3 +1,14 @@
+TODO:
+- Parser error messages
+- List and dict access with [ ]
+- Parallel keyword
+- Add function for parsing lists
+- Add more typing in parsing phase
+
+
+
+
+FEATURES:
 1. lambdas only
 - parameter types optional
 2. basic arithmetic

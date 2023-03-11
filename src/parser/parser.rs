@@ -1,5 +1,4 @@
 use log::{debug, error};
-use std::borrow::Borrow;
 use std::collections::HashMap;
 
 use crate::scanner::token::{make_empty_token, Token};
@@ -206,7 +205,7 @@ impl Parser {
     pub fn parse(&mut self, tokens: &Vec<Token>) {
         self.tokens = tokens.clone();
         self.root_exp = self.parse_expression();
-        println!("{:?}", self.root_exp)
+        println!("{:#?}", self.root_exp)
     }
 
     fn parse_expression(&mut self) -> Exp {
@@ -258,7 +257,7 @@ impl Parser {
                     => self.parse_collection_def(),
             Token::Delimiter{..}
                 if self.match_optional_delimiter(Delimiter::ParenLeft)
-                    => self.parse_tuple_def(),
+                    => self.parse_tuple_def_or_simple_expression(),
             Token::Delimiter{..}
                 if self.match_optional_delimiter(Delimiter::SchemaStart)
                     => self.parse_schema_def(),
@@ -361,7 +360,7 @@ impl Parser {
         match self.curr() {
             Token::Delimiter{..}
                 if self.match_optional_delimiter(Delimiter::BraceLeft)
-            => {
+                    => {
                 let exp = self.parse_simple_expression();
                 self.match_required_delimiter(Delimiter::BraceRight);
                 exp
@@ -576,8 +575,28 @@ impl Parser {
         }
     }
     
-    fn parse_tuple_def(&mut self) -> Exp {
-        self.make_empty_exp_todo()
+    fn parse_tuple_def_or_simple_expression(&mut self) -> Exp {
+        let token= self.curr().clone();
+        let first_element = self.parse_simple_expression();
+
+        let mut tuple_types = vec![first_element.exp_type.clone()];
+        let mut tuple_elements = vec![first_element.clone()];
+        while self.match_optional_delimiter(Delimiter::Comma) &&
+            !self.match_optional_delimiter(Delimiter::ParenRight) {
+            let tuple_element = self.parse_simple_expression();
+            tuple_types.push(tuple_element.exp_type.clone());
+            tuple_elements.push(tuple_element);
+        }
+
+        if tuple_elements.len() == 1 {
+            first_element
+        } else {
+            Exp{
+                exp: Expression::TupleDef{values: tuple_elements},
+                exp_type: TupleType{tuple_types},
+                token
+            }
+        }
     }
 
     fn parse_schema_def(&mut self) -> Exp {

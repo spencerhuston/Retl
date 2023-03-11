@@ -1,7 +1,7 @@
 use strum_macros::{EnumString, Display};
 use crate::defs::operator::Operator;
 
-#[derive(Display, Debug, PartialEq, Eq, EnumString, Clone, Hash)]
+#[derive(Display, Debug, PartialEq, Eq, EnumString, Clone)]
 pub enum Delimiter {
     #[strum(serialize = ":")]
     DenoteType,

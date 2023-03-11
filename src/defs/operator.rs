@@ -1,6 +1,6 @@
 use strum_macros::Display;
 
-#[derive(Display, Debug, Eq, PartialEq, Clone, Hash)]
+#[derive(Display, Debug, Eq, PartialEq, Clone)]
 pub enum Operator {
     #[strum(serialize = "+")]
     Plus,

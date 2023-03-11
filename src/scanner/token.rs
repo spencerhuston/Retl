@@ -12,7 +12,7 @@ pub fn make_empty_token() -> Token {
     }}
 }
 
-#[derive(Display, Debug, Clone, Hash, PartialEq, Eq)]
+#[derive(Display, Debug, Clone, PartialEq, Eq)]
 pub enum Token {
     Delimiter { delim: Delimiter, fp: FilePosition },
     Keyword { keyword: Keyword, fp: FilePosition },

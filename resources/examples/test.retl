@@ -1,2 +1,2 @@
-let a = 5;
+let a: int = 5;
 if (true) { 3 } else { 4 }

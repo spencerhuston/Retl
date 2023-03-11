@@ -35,11 +35,53 @@ fn get_return_type(exp: &Option<Exp>) -> Type {
     }
 }
 
+fn get_exp_literal(exp: Exp) -> Literal {
+    match exp.exp {
+        Expression::Lit{lit} if lit != NullLit => lit,
+        _ => NullLit // TODO: Throw error here, dict key requires non-null literal type
+    }
+}
+
+fn make_list_def_range(start: usize, end: usize, token: &Token) -> Vec<Exp> {
+    let mut range: Vec<Exp> = vec![];
+    let mut index = start;
+    while index < end {
+        range.push(
+            Exp{
+                exp: Expression::Lit{lit: IntLit{literal: index as i32}},
+                exp_type: IntType,
+                token: token.clone()
+            }
+        );
+        index += 1;
+    }
+    range
+}
+
+fn get_int_literal_value(exp: Expression) -> usize {
+    match exp {
+        Expression::Lit{lit} => {
+            match lit {
+                IntLit{literal} => {
+                    if literal < 0 {
+                        // TODO: Throw error here, negative range bound
+                        0
+                    } else {
+                        literal as usize
+                    }
+                },
+                _ => 0 // TODO: Throw error here, not an integer literal
+            }
+        },
+        _ => 0 // TODO: Throw error here, not an integer literal
+    }
+}
+
 impl Parser {
     pub fn init() -> Parser {
         Parser{root_exp: Exp{
             exp: Expression::Empty,
-            exp_type: Type::NullType,
+            exp_type: NullType,
             token: make_empty_token()
         }, tokens: vec![], index: 0, dummy_count: 0, anon_count: 0}
     }
@@ -59,10 +101,6 @@ impl Parser {
     fn advance(&mut self) {
         self.index += 1
     }
-
-    // fn peek<T>(&self, token: T) -> bool {
-    //     self.index < self.tokens.len() - 1 && self.match_t::<T>(self.index + 1, token)
-    // }
 
     fn match_required_delimiter(&mut self, delim: Delimiter) -> bool {
         let matched = match self.tokens[self.index].borrow() {
@@ -284,7 +322,7 @@ impl Parser {
                     operator: Operator::And,
                     left: Box::new(Exp{
                         exp: Expression::Lit{lit: Literal::BoolLit{literal: false}},
-                        exp_type: Type::BoolType,
+                        exp_type: BoolType,
                         token: token.clone()
                     }),
                     right: Box::new(right)},
@@ -296,7 +334,7 @@ impl Parser {
                     operator: Operator::Minus,
                     left: Box::new(Exp{
                         exp: Expression::Lit{lit: Literal::IntLit{literal: 0}},
-                        exp_type: Type::IntType,
+                        exp_type: IntType,
                         token: token.clone()
                     }),
                     right: Box::new(right)},
@@ -418,10 +456,29 @@ impl Parser {
                         token: token.clone()
                     }
                 } else {
-                    Exp{
+                    let int_literal = Exp{
                         exp: Expression::Lit{lit: IntLit{literal: value.parse().unwrap()}},
                         exp_type: IntType,
                         token: token.clone()
+                    };
+                    if self.match_optional_delimiter(Delimiter::Range) {
+                        let int_literal_range_bound_noninclusive = self.parse_literal();
+                        let range_start = get_int_literal_value(int_literal.exp.clone());
+                        let range_end = get_int_literal_value(int_literal_range_bound_noninclusive.exp);
+                        if range_end <= range_start {
+                            // TODO: Throw error here, invalid range bounds
+                            int_literal
+                        } else {
+                            Exp{
+                                exp: Expression::ListDef{
+                                    values: make_list_def_range(range_start, range_end, &token)
+                                },
+                                exp_type: ListType{list_type: Box::new(IntType)},
+                                token
+                            }
+                        }
+                    } else {
+                        int_literal
                     }
                 }
             }
@@ -473,12 +530,13 @@ impl Parser {
                 token
             }
         } else if self.match_optional_delimiter(Delimiter::DenoteType) {
-            let mut mapping: HashMap<Exp, Exp> = HashMap::new();
-            mapping.insert(first_element, self.parse_simple_expression());
+            let mut mapping: HashMap<Literal, Exp> = HashMap::new();
+            let first_key = get_exp_literal(first_element);
+            mapping.insert(first_key, self.parse_simple_expression());
 
             while self.match_optional_delimiter(Delimiter::Comma) &&
                 !self.match_optional_delimiter(Delimiter::BracketRight) {
-                let key = self.parse_simple_expression();
+                let key = get_exp_literal(self.parse_simple_expression());
                 self.match_required_delimiter(Delimiter::DenoteType);
                 let value = self.parse_simple_expression();
                 mapping.insert(key, value);

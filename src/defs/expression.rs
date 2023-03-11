@@ -5,7 +5,7 @@ use crate::scanner::token::Token;
 use crate::defs::retl_type::Type;
 use crate::defs::operator::Operator;
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)] // TODO: Consolidate derivation order
+#[derive(Debug, Clone, Eq, PartialEq)] // TODO: Consolidate derivation order
 pub struct Exp {
     pub exp: Expression,
     pub exp_type: Type,
@@ -21,14 +21,14 @@ pub enum Literal {
     NullLit
 }
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Parameter {
     ident: String, 
     param_type: Option<Type>,
     token: Token
 }
 
-#[derive(Display, Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Display, Debug, Clone, Eq, PartialEq)]
 pub enum Pattern {
     TypePattern{ident: String, case_type: Type, predicate: Option<Exp>},
     Literal{literal: Literal},
@@ -37,13 +37,13 @@ pub enum Pattern {
     Any
 }
 
-#[derive(Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Case {
     pattern: Pattern,
     case_exp: Exp
 }
 
-#[derive(Display, Debug, Clone, Hash, Eq, PartialEq)]
+#[derive(Display, Debug, Clone, Eq, PartialEq)]
 pub enum Expression {
     Lit{lit: Literal},
     Let{ident: String, let_type: Type, let_exp: Box<Exp>, after_let_exp: Box<Option<Exp>>},
@@ -57,7 +57,7 @@ pub enum Expression {
     ListDef{values: Vec<Exp>},
     TupleDef{values: Vec<Exp>},
     TupleAccess{ident: Box<Exp>, index: i32},
-    DictDef{mapping: HashMap<Exp, Exp>},
+    DictDef{mapping: HashMap<Literal, Exp>},
     SchemaDef{mapping: HashMap<String, Type>},
     Empty
 }

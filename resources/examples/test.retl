@@ -1,3 +1,3 @@
-let a: int = 1 + 2 * (3 + 4);
-let b: tuple[int, char] = (1, 'a');
+a;
+let b = (1, 'a');
 b.1

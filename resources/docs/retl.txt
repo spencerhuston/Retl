@@ -1,11 +1,9 @@
 TODO:
-- Parse lambda
-- Parse match
-- Parse list and dict access with [ ]
 - Parser error messages
-- Parallel keyword
-- Add function for parsing lists
+- Add function for parsing out lists
 - Add more typing in parsing phase
+- Parallel keyword?
+- Tuple deconstruction?
 
 
 

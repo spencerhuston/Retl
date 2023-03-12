@@ -6,9 +6,9 @@ Supported features in-progress:
 - CSV read/write
 - stdin/out
 - integer, boolean, char, string, null, list, tuple, and dictionary types
-- range construction for int type
+- range construction for integer type
 - schema type
-- list operators: ++, []
+- list concant operator
 - type inference
 - strong, dynamic typing
 - type-aliasing
@@ -22,4 +22,3 @@ Supported features in-progress:
 - Builtin functions: map, filter, foreach, etc.
 - user-defined functions as lambdas
 - Lazy evaluation
-- *parallel* keyword

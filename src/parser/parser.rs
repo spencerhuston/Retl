@@ -473,6 +473,15 @@ impl Parser {
                     reference
                 }
             },
+            Some(Token::Keyword{keyword, fp: _}) if keyword.is_builtin_function() => {
+                let token = self.curr().unwrap().clone();
+                self.advance();
+                Exp{
+                    exp: Expression::Reference{ident: keyword.to_string()},
+                    exp_type: UnknownType,
+                    token
+                }
+            },
             Some(Token::Delimiter{..})
                 if self.match_optional_delimiter(Delimiter::ParenLeft)
                     => {
@@ -596,10 +605,10 @@ impl Parser {
 
         if self.match_optional_delimiter(Delimiter::Comma) {
             let mut elements: Vec<Exp> = vec![first_element, self.parse_simple_expression()];
-            while self.match_optional_delimiter(Delimiter::Comma) &&
-                !self.match_optional_delimiter(Delimiter::BracketRight) {
+            while self.match_optional_delimiter(Delimiter::Comma) {
                 elements.push(self.parse_simple_expression())
             }
+            self.match_optional_delimiter(Delimiter::BracketRight);
             Exp{
                 exp: Expression::ListDef{values: elements},
                 exp_type: ListType{list_type: Box::new(UnknownType)},
@@ -610,13 +619,13 @@ impl Parser {
             let first_key = get_exp_literal(first_element);
             mapping.insert(first_key, self.parse_simple_expression());
 
-            while self.match_optional_delimiter(Delimiter::Comma) &&
-                !self.match_optional_delimiter(Delimiter::BracketRight) {
+            while self.match_optional_delimiter(Delimiter::Comma) {
                 let key = get_exp_literal(self.parse_simple_expression());
                 self.match_required_delimiter(Delimiter::DenoteType);
                 let value = self.parse_simple_expression();
                 mapping.insert(key, value);
             }
+            self.match_optional_delimiter(Delimiter::BracketRight);
             Exp{
                 exp: Expression::DictDef{mapping},
                 exp_type: DictType{
@@ -660,13 +669,13 @@ impl Parser {
         self.match_required_delimiter(Delimiter::BraceLeft);
         let mut mapping: HashMap<String, Type> = HashMap::new();
 
-        while self.match_optional_delimiter(Delimiter::Comma)  {
+        while self.match_optional_delimiter(Delimiter::Comma) ||
+            !self.match_optional_delimiter(Delimiter::BraceRight) {
             let ident = self.match_ident();
             self.match_required_delimiter(Delimiter::DenoteType);
             let col_type = self.parse_type();
             mapping.insert(ident, col_type);
         }
-        self.match_optional_delimiter(Delimiter::BraceRight);
 
         Exp {
             exp: Expression::SchemaDef{mapping},
@@ -692,6 +701,7 @@ impl Parser {
                 }
             },
             Some(Token::Ident{ident, fp: _}) if ident == "_" => { // catch-all
+                self.advance();
                 Pattern::Any
             },
             Some(Token::Value{..}) => {
@@ -744,6 +754,7 @@ impl Parser {
         while self.match_optional_delimiter(Delimiter::Comma) {
             cases.push(self.parse_case())
         }
+        self.match_required_delimiter(Delimiter::BraceRight);
         let exp_type = cases.first().unwrap().case_exp.exp_type.clone();
         Exp{
             exp: Expression::Match{
@@ -769,10 +780,11 @@ impl Parser {
         let token = self.curr().unwrap().clone();
         let mut params: Vec<Parameter> = vec![];
         if !self.match_optional_delimiter(Delimiter::LambdaSig) {
-            while self.match_optional_delimiter(Delimiter::Comma) {
+            while self.match_optional_delimiter(Delimiter::Comma) ||
+                !self.match_optional_delimiter(Delimiter::LambdaSig) {
                 params.push(self.parse_parameter());
             }
-            self.match_optional_delimiter(Delimiter::LambdaSig);
+
         }
 
         self.match_required_delimiter(Delimiter::ReturnType);
@@ -822,10 +834,10 @@ impl Parser {
 
     fn parse_arguments(&mut self) -> Vec<Exp> {
         let mut args: Vec<Exp> = vec![self.parse_simple_expression()];
-        while self.match_optional_delimiter(Delimiter::Comma) {
+        while self.match_optional_delimiter(Delimiter::Comma) ||
+            !self.match_optional_delimiter(Delimiter::ParenRight) {
             args.push(self.parse_simple_expression())
         }
-        self.match_optional_delimiter(Delimiter::ParenRight);
         args
     }
 
@@ -881,19 +893,19 @@ impl Parser {
                 self.match_required_delimiter(Delimiter::BracketLeft);
                 let mut tuple_types = vec![self.parse_type()];
 
-                while self.match_optional_delimiter(Delimiter::Comma) &&
-                    !self.match_optional_delimiter(Delimiter::BracketRight) {
+                while self.match_optional_delimiter(Delimiter::Comma) {
                     tuple_types.push(self.parse_type())
                 }
+                self.match_optional_delimiter(Delimiter::BracketRight);
                 TupleType{tuple_types}
             },
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Schema) => SchemaType,
             Some(Token::Delimiter{..}) if self.match_optional_delimiter(Delimiter::ParenLeft) => {
                 let mut param_types = vec![self.parse_type()];
-                while self.match_optional_delimiter(Delimiter::Comma) &&
-                    !self.match_optional_delimiter(Delimiter::ParenRight) {
+                while self.match_optional_delimiter(Delimiter::Comma) {
                     param_types.push(self.parse_type())
                 }
+                self.match_optional_delimiter(Delimiter::ParenRight);
 
                 self.match_required_delimiter(Delimiter::ReturnType);
                 let return_type = self.parse_type();

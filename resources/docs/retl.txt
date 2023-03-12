@@ -1,7 +1,8 @@
 TODO:
 - Parser error messages
-- Add function for parsing out lists
 - Add more typing in parsing phase
+
+Possible features?
 - Parallel keyword?
 - Tuple deconstruction?
 

@@ -79,4 +79,23 @@ impl Keyword {
             _ => None
         }
     }
+
+    pub fn is_builtin_function(&self) -> bool {
+        match *self {
+            Keyword::Readln |
+            Keyword::ReadCSV |
+            Keyword::WriteCSV |
+            Keyword::Print |
+            Keyword::Println |
+            Keyword::Map |
+            Keyword::Filter |
+            Keyword::Zip |
+            Keyword::Foldl |
+            Keyword::Foldr |
+            Keyword::Foreach |
+            Keyword::Range
+            => true,
+            _ => false
+        }
+    }
 }

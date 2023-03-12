@@ -7,13 +7,12 @@
     | 'schema'
     | <ident>
 
-<literal> ::= <int> | <bool> | <char> | <string> | <null>
+<literal> ::= <int> | <bool> | <char> | <string> | <null> | <range>
 <int> ::= [integer]
 <bool> ::= 'true' | 'false'
 <char> ::= '''[character]'''
 <string> ::= '"'[character]*'"'
 <null> ::= 'null'
-
 <range> ::= <int>'..'<int>
 
 <atom> ::= <literal>

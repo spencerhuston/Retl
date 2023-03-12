@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::scanner::token::{make_empty_token, Token};
 use crate::defs::keyword::Keyword;
 use crate::defs::delimiter::Delimiter;
-use crate::defs::expression::{Exp, Expression, Literal, Parameter};
+use crate::defs::expression::{Exp, Expression, Literal, Parameter, Case, Pattern};
 use crate::defs::expression::Literal::*;
 use crate::defs::operator::Operator;
 use crate::defs::retl_type::Type;
@@ -618,9 +618,85 @@ impl Parser {
             token
         }
     }
-    
+
+    fn parse_pattern(&mut self) -> Pattern {
+        match self.curr() {
+            Token::Ident{ident, fp: _} if ident != "_" => { // type case
+                self.advance();
+                self.match_required_delimiter(Delimiter::DenoteType);
+                let case_type = self.parse_type();
+                let mut predicate: Option<Exp> = None;
+                if self.match_optional_keyword(Keyword::If) {
+                    predicate = Some(self.parse_simple_expression())
+                }
+                Pattern::TypePattern{
+                    ident,
+                    case_type,
+                    predicate
+                }
+            },
+            Token::Ident{ident, fp: _} if ident == "_" => { // catch-all
+                Pattern::Any
+            },
+            Token::Value{..} => {
+                let lit_pattern = self.parse_literal();
+                match lit_pattern.exp.clone() {
+                    list@Expression::ListDef{..} => Pattern::Range{range: list},
+                    Expression::Lit{lit} => { // Literal
+                        if self.match_optional_delimiter(Delimiter::LambdaSig) {
+                            let mut literals: Vec<Literal> = vec![
+                                get_exp_literal(lit_pattern),
+                                get_exp_literal(self.parse_literal())
+                            ];
+                            while self.match_optional_delimiter(Delimiter::LambdaSig) {
+                                literals.push(get_exp_literal(self.parse_literal()))
+                            }
+                            Pattern::MultiLiteral{literals}
+                        } else {
+                            Pattern::Literal{literal: lit}
+                        }
+                    },
+                    _ => {
+                        // TODO: Throw error here, invalid pattern
+                        Pattern::Any
+                    }
+                }
+            },
+            _ => {
+                // TODO: Throw error here, invalid pattern
+                Pattern::Any
+            }
+        }
+    }
+
+    fn parse_case(&mut self) -> Case {
+        self.match_required_keyword(Keyword::Case);
+        let pattern = self.parse_pattern();
+        self.match_required_delimiter(Delimiter::CaseExp);
+        let case_exp = self.parse_simple_expression();
+        Case{
+            pattern,
+            case_exp
+        }
+    }
+
     fn parse_match(&mut self) -> Exp {
-        self.make_empty_exp_todo()
+        let token = self.curr().clone();
+        let value = self.parse_atom();
+        self.match_required_delimiter(Delimiter::BraceLeft);
+        let mut cases = vec![self.parse_case()];
+        while self.match_optional_delimiter(Delimiter::Comma) {
+            cases.push(self.parse_case())
+        }
+        let exp_type = cases.first().unwrap().case_exp.exp_type.clone();
+        Exp{
+            exp: Expression::Match{
+                match_exp: Box::new(value),
+                cases
+            },
+            exp_type,
+            token
+        }
     }
 
     fn parse_parameter(&mut self) -> Parameter {

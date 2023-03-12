@@ -33,14 +33,14 @@ pub enum Pattern {
     TypePattern{ident: String, case_type: Type, predicate: Option<Exp>},
     Literal{literal: Literal},
     MultiLiteral{literals: Vec<Literal>},
-    Range{range: Exp},
+    Range{range: Expression},
     Any
 }
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Case {
-    pattern: Pattern,
-    case_exp: Exp
+    pub pattern: Pattern,
+    pub case_exp: Exp
 }
 
 #[derive(Display, Debug, Clone, Eq, PartialEq)]

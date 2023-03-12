@@ -18,6 +18,7 @@ FEATURES:
 - type inference
 - range operator ..
 4. basic pattern matching
+- match by type: {name}: {type}
 - multi-choice: |
 - range: ..
 - predicates
@@ -51,6 +52,7 @@ FEATURES:
 9. lazy evaluation
 10. strong, dynamic typing
 11. Basic string interpolation for prints
+12. tuple deconstruction
 
 Structure:
 ReplRunner

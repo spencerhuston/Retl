@@ -2,6 +2,7 @@ mod scanner;
 mod parser;
 mod defs;
 mod utils;
+mod interpreter;
 
 use std::error::Error;
 use clap::Parser;

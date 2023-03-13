@@ -1,4 +1,5 @@
 TODO:
+- Interpreter skeleton w/ type-checking
 - Add more typing in parsing phase
 
 Possible features?

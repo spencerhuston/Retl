@@ -1,5 +1,4 @@
 TODO:
-- Parser error messages
 - Add more typing in parsing phase
 
 Possible features?

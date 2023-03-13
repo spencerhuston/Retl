@@ -9,6 +9,7 @@ use crate::defs::expression::Literal::*;
 use crate::defs::operator::Operator;
 use crate::defs::retl_type::Type;
 use crate::defs::retl_type::Type::*;
+use crate::utils::file_position::FilePosition;
 
 pub struct Parser {
     root_exp: Exp,
@@ -34,13 +35,6 @@ fn get_return_type(exp: &Option<Exp>) -> Type {
     }
 }
 
-fn get_exp_literal(exp: Exp) -> Literal {
-    match exp.exp {
-        Expression::Lit{lit} if lit != NullLit => lit,
-        _ => NullLit // TODO: Throw error here, dict key requires non-null literal type
-    }
-}
-
 fn make_list_def_range(start: usize, end: usize, token: &Token) -> Vec<Exp> {
     let mut range: Vec<Exp> = vec![];
     let mut index = start;
@@ -57,22 +51,12 @@ fn make_list_def_range(start: usize, end: usize, token: &Token) -> Vec<Exp> {
     range
 }
 
-fn get_int_literal_value(exp: Expression) -> usize {
-    match exp {
-        Expression::Lit{lit} => {
-            match lit {
-                IntLit{literal} => {
-                    if literal < 0 {
-                        // TODO: Throw error here, negative range bound
-                        0
-                    } else {
-                        literal as usize
-                    }
-                },
-                _ => 0 // TODO: Throw error here, not an integer literal
-            }
-        },
-        _ => 0 // TODO: Throw error here, not an integer literal
+fn get_fp_from_token(token: &Token) -> FilePosition {
+    match token {
+        Token::Delimiter{delim: _, fp} => fp.clone(),
+        Token::Keyword{keyword: _, fp} => fp.clone(),
+        Token::Value{value: _, fp} => fp.clone(),
+        Token::Ident{ident: _, fp} => fp.clone()
     }
 }
 
@@ -85,7 +69,7 @@ impl Parser {
         }, tokens: vec![], index: 0, dummy_count: 0, anon_count: 0}
     }
 
-    fn make_empty_exp_todo(&mut self) -> Exp {
+    fn make_empty_exp(&mut self) -> Exp {
         Exp{
             exp: Expression::Empty,
             exp_type: NullType,
@@ -95,10 +79,10 @@ impl Parser {
 
     fn curr(&self) -> Option<Token> {
         if self.index >= self.tokens.len() {
-            println!("curr: EMPTY");
+            debug!("curr: EMPTY");
             None
         } else {
-            println!("curr: {:?}", self.tokens[self.index].clone());
+            debug!("curr: {:?}", self.tokens[self.index].clone());
             Some(self.tokens[self.index].clone())
         }
     }
@@ -118,7 +102,7 @@ impl Parser {
                 delim,
                 get_token_as_string(self.tokens[self.index].clone()))
         } else {
-            println!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
+            debug!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
         }
 
         self.advance();
@@ -136,7 +120,7 @@ impl Parser {
                 keyword,
                 get_token_as_string(self.tokens[self.index].clone()))
         } else {
-            println!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
+            debug!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
         }
 
         self.advance();
@@ -150,7 +134,7 @@ impl Parser {
         };
 
         if matched {
-            println!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
+            debug!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
             self.advance()
         }
 
@@ -164,7 +148,7 @@ impl Parser {
         };
 
         if matched {
-            println!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
+            debug!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
             self.advance()
         }
 
@@ -174,7 +158,7 @@ impl Parser {
     fn match_ident(&mut self) -> String {
         match self.curr() {
             Some(Token::Ident{ident, fp: _}) => {
-                println!("MATCHED IDENT: curr {:?}, ident {:?}", self.curr(), ident);
+                debug!("MATCHED IDENT: curr {:?}, ident {:?}", self.curr(), ident);
                 self.advance();
                 ident
             },
@@ -208,9 +192,47 @@ impl Parser {
                     None => false
                 }
             },
+            _ => false
+        }
+    }
+
+    fn get_exp_literal(&mut self, exp: Exp) -> Literal {
+        match exp.exp {
+            Expression::Lit{lit} if lit != NullLit => lit,
             _ => {
-                // TODO: Throw error here, EOF
-                false
+                error!("Expected non-null literal value: {}", match exp.token {
+                Token::Value{value: _, fp} => fp.position(),
+                _ => "".to_string()
+            });
+                NullLit
+            }
+        }
+    }
+
+    fn get_int_literal_value(&mut self, exp: Expression) -> usize {
+        match exp {
+            Expression::Lit{lit} => {
+                match lit {
+                    IntLit{literal} => {
+                        if literal < 0 {
+                            error!("Range requires positive integer value: {:?}",
+                                get_fp_from_token(&self.curr().unwrap()));
+                            0
+                        } else {
+                            literal as usize
+                        }
+                    },
+                    _ => {
+                        error!("Range requires positive integer value: {:?}",
+                            get_fp_from_token(&self.curr().unwrap()));
+                        0
+                    }
+                }
+            },
+            _ => {
+                error!("Range requires positive integer value: {:?}",
+                    get_fp_from_token(&self.curr().unwrap()));
+                0
             }
         }
     }
@@ -218,7 +240,7 @@ impl Parser {
     pub fn parse(&mut self, tokens: &Vec<Token>) {
         self.tokens = tokens.clone();
         self.root_exp = self.parse_expression();
-        println!("{:#?}", self.root_exp)
+        debug!("{:#?}", self.root_exp)
     }
 
     fn parse_expression(&mut self) -> Exp {
@@ -247,17 +269,14 @@ impl Parser {
                     smp
                 }
             },
-            _ => {
-                // TODO: Throw error or return NoOp?
-                self.make_empty_exp_todo()
-            }
+            _ => self.make_empty_exp()
         }
     }
 
     fn parse_let(&mut self) -> Exp {
         let token = self.curr().unwrap();
         let ident = self.match_ident();
-        
+
         let mut let_type = UnknownType;
         if self.match_optional_delimiter(Delimiter::DenoteType) {
             let_type = self.parse_type()
@@ -308,10 +327,7 @@ impl Parser {
                 if self.match_optional_keyword(Keyword::Alias)
                     => self.parse_alias(),
             Some(_) => self.parse_utight_with_min(0),
-            _ => {
-                // TODO: Throw error or return NoOp?
-                self.make_empty_exp_todo()
-            }
+            _ => self.make_empty_exp()
         }
     }
 
@@ -373,7 +389,7 @@ impl Parser {
                 exp: Expression::Primitive{
                     operator: Operator::And,
                     left: Box::new(Exp{
-                        exp: Expression::Lit{lit: Literal::BoolLit{literal: false}},
+                        exp: Expression::Lit{lit: BoolLit{literal: false}},
                         exp_type: BoolType,
                         token: token.clone()
                     }),
@@ -385,7 +401,7 @@ impl Parser {
                 exp: Expression::Primitive{
                     operator: Operator::Minus,
                     left: Box::new(Exp{
-                        exp: Expression::Lit{lit: Literal::IntLit{literal: 0}},
+                        exp: Expression::Lit{lit: IntLit{literal: 0}},
                         exp_type: IntType,
                         token: token.clone()
                     }),
@@ -414,28 +430,38 @@ impl Parser {
                         Expression::Application{ident: _, ref mut args} => {
                             args.insert(0, inner_app);
                         },
-                        _ => () // TODO: throw error if outer app is not application expression
+                        _ => {
+                            error!("Function chain requires valid function application: {:?}",
+                                get_fp_from_token(&outer_app.token));
+                            ()
+                        }
                     }
                     inner_app = outer_app
                 }
                 inner_app
             },
-            _ => {
-                // TODO: Throw error or return NoOp?
-                self.make_empty_exp_todo()
-            }
+            _ => self.make_empty_exp()
         }
     }
 
     fn parse_access_index(&mut self) -> i32 {
-        match self.parse_literal().exp {
+        let index = self.parse_literal();
+        match index.exp {
             Expression::Lit{lit} => {
                 match lit {
                     IntLit{literal} => literal,
-                    _ => -1 // TODO: Throw error here
+                    _ => {
+                        error!("Tuple access requires integer literal for index: {:?}",
+                                get_fp_from_token(&index.token));
+                        -1
+                    }
                 }
             },
-            _ => -1 // TODO: Throw error here
+            _ => {
+                error!("Tuple access requires integer literal for index: {:?}",
+                                get_fp_from_token(&index.token));
+                -1
+            }
         }
     }
 
@@ -490,10 +516,7 @@ impl Parser {
                 smp
             }
             Some(_) => self.parse_literal(),
-            _ => {
-                // TODO: Throw error or return NoOp?
-                self.make_empty_exp_todo()
-            }
+            _ => self.make_empty_exp()
         }
     }
 
@@ -548,10 +571,11 @@ impl Parser {
                     self.advance();
                     if self.match_optional_delimiter(Delimiter::Range) {
                         let int_literal_range_bound_noninclusive = self.parse_literal();
-                        let range_start = get_int_literal_value(int_literal.exp.clone());
-                        let range_end = get_int_literal_value(int_literal_range_bound_noninclusive.exp);
+                        let range_start = self.get_int_literal_value(int_literal.exp.clone());
+                        let range_end = self.get_int_literal_value(int_literal_range_bound_noninclusive.exp);
                         if range_end <= range_start {
-                            // TODO: Throw error here, invalid range bounds
+                            error!("Integer range construction requires valid bounds: {:?}",
+                                get_fp_from_token(&int_literal_range_bound_noninclusive.token));
                             int_literal
                         } else {
                             Exp{
@@ -567,10 +591,10 @@ impl Parser {
                     }
                 }
             }
-            _ => self.make_empty_exp_todo() // TODO: Throw error here
+            _ => self.make_empty_exp()
         }
     }
-    
+
     fn parse_branch(&mut self) -> Exp {
         let token = self.curr().unwrap();
         self.match_required_delimiter(Delimiter::ParenLeft);
@@ -587,7 +611,7 @@ impl Parser {
             self.match_required_delimiter(Delimiter::BraceRight);
         }
         let exp_type = if else_branch == None { NullType } else { if_branch.exp_type.clone() };
-        
+
         Exp{
             exp: Expression::Branch{
                 condition: Box::new(condition),
@@ -598,7 +622,7 @@ impl Parser {
             token
         }
     }
-    
+
     fn parse_collection_def(&mut self) -> Exp {
         let token = self.curr().unwrap().clone();
         let first_element = self.parse_simple_expression();
@@ -616,11 +640,12 @@ impl Parser {
             }
         } else if self.match_optional_delimiter(Delimiter::DenoteType) {
             let mut mapping: HashMap<Literal, Exp> = HashMap::new();
-            let first_key = get_exp_literal(first_element);
+            let first_key = self.get_exp_literal(first_element);
             mapping.insert(first_key, self.parse_simple_expression());
 
             while self.match_optional_delimiter(Delimiter::Comma) {
-                let key = get_exp_literal(self.parse_simple_expression());
+                let key_exp = self.parse_simple_expression();
+                let key = self.get_exp_literal(key_exp);
                 self.match_required_delimiter(Delimiter::DenoteType);
                 let value = self.parse_simple_expression();
                 mapping.insert(key, value);
@@ -635,11 +660,16 @@ impl Parser {
                 token
             }
         } else {
-            // TODO: Throw error here, not a valid list
-            first_element
+            self.match_optional_delimiter(Delimiter::BracketRight);
+            let list_type = first_element.exp_type.clone();
+            Exp{
+                exp: Expression::ListDef{values: vec![first_element]},
+                exp_type: ListType{list_type: Box::new(list_type)},
+                token
+            }
         }
     }
-    
+
     fn parse_tuple_def_or_simple_expression(&mut self) -> Exp {
         let token= self.curr().unwrap().clone();
         let first_element = self.parse_simple_expression();
@@ -711,11 +741,15 @@ impl Parser {
                     Expression::Lit{lit} => { // Literal
                         if self.match_optional_delimiter(Delimiter::LambdaSig) {
                             let mut literals: Vec<Literal> = vec![
-                                get_exp_literal(lit_pattern),
-                                get_exp_literal(self.parse_literal())
+                                self.get_exp_literal(lit_pattern),
+                                {
+                                    let second_value = self.parse_literal();
+                                    self.get_exp_literal(second_value)
+                                }
                             ];
                             while self.match_optional_delimiter(Delimiter::LambdaSig) {
-                                literals.push(get_exp_literal(self.parse_literal()))
+                                let literal = self.parse_literal();
+                                literals.push(self.get_exp_literal(literal))
                             }
                             Pattern::MultiLiteral{literals}
                         } else {
@@ -723,13 +757,19 @@ impl Parser {
                         }
                     },
                     _ => {
-                        // TODO: Throw error here, invalid pattern
+                        error!("Invalid pattern: {:?}",
+                            get_fp_from_token(&lit_pattern.token));
                         Pattern::Any
                     }
                 }
             },
+            Some(_) => {
+                error!("Invalid pattern: {:?}",
+                    get_fp_from_token(&self.curr().unwrap()));
+                Pattern::Any
+            },
             _ => {
-                // TODO: Throw error here, invalid pattern
+                error!("Invalid pattern or EOF");
                 Pattern::Any
             }
         }
@@ -784,7 +824,6 @@ impl Parser {
                 !self.match_optional_delimiter(Delimiter::LambdaSig) {
                 params.push(self.parse_parameter());
             }
-
         }
 
         self.match_required_delimiter(Delimiter::ReturnType);
@@ -811,7 +850,7 @@ impl Parser {
             exp_type: func_type.clone(),
             token: token.clone()
         };
-        let ident = self.dummy();
+        let ident = self.anon();
         let let_type = func_type.clone();
         let let_exp = lambda;
         let after_let_exp = Exp{
@@ -911,7 +950,15 @@ impl Parser {
                 let return_type = self.parse_type();
                 FuncType{param_types, return_type: Box::new(return_type)}
             }
-            _ => UnknownType // TODO: Throw error here
+            Some(_) => {
+                error!("Invalid type signature: {:?}",
+                    get_fp_from_token(&self.curr().unwrap()));
+                UnknownType
+            },
+            _ => {
+                error!("Invalid type signature or EOF");
+                UnknownType
+            }
         };
 
         if self.match_optional_delimiter(Delimiter::ReturnType) {

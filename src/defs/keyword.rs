@@ -74,6 +74,7 @@ pub enum Keyword {
 impl Keyword {
     pub fn to_operator(&self) -> Option<Operator> {
         match *self {
+            Keyword::Not => Some(Operator::Not),
             Keyword::And => Some(Operator::And),
             Keyword::Or => Some(Operator::Or),
             _ => None

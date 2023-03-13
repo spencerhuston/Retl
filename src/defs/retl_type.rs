@@ -1,4 +1,4 @@
-use strum_macros::{EnumString, Display};
+use strum_macros::Display;
 
 #[derive(Display, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Type {

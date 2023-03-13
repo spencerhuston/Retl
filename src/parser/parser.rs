@@ -12,7 +12,7 @@ use crate::defs::retl_type::Type::*;
 
 pub struct Parser {
     pub error: bool,
-    root_exp: Exp,
+    pub root_exp: Exp,
     tokens: Vec<Token>,
     index: usize,
     dummy_count: i32,
@@ -65,10 +65,12 @@ impl Parser {
         Parser{
             error: false,
             root_exp: Exp{
-            exp: Expression::Empty,
-            exp_type: NullType,
-            token: make_empty_token()
-        }, tokens: vec![], index: 0, dummy_count: 0, anon_count: 0}
+                exp: Expression::Empty,
+                exp_type: NullType,
+                token: make_empty_token()
+            },
+            tokens: vec![], index: 0, dummy_count: 0, anon_count: 0
+        }
     }
 
     fn make_empty_exp(&mut self) -> Exp {

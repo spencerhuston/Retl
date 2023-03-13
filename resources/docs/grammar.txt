@@ -20,7 +20,7 @@
     | <ident>['.'<ident>]
 
 <param> ::= <ident>[':' <type>]
-<lambda> ::= '|'[<param>[','<param>]*]'|' '->' <type> '{'<exp>'}'
+<lambda> ::= '|'[<param>[','<param>]*]'|' '->' <type> '{'<_exp>'}'
 
 <app> ::= <atom>['('[<smp>[','<smp>]*]')']
 
@@ -28,7 +28,7 @@
 <match> ::= 'match' <atom> '{' 'case' <pattern> '=>' <smp>[',''case' <pattern> '=>' <smp>]*'}'
 
 <tight> ::= <app>['|>'<app>]
-    | '{'<exp>'}'
+    | '{'<_exp>'}'
 
 <arithOp> ::= '+' | '-' | '*' | '/' | '%'
 <boolOp> ::= '<' | '>' | '<=' | '>=' | '==' | 'not' | 'and' | 'or'
@@ -47,5 +47,5 @@
     | <lambda>
     | <alias>
 
-<exp> ::= <smp>[';'<exp>]
-    | 'let' <ident> [':' <type>] '=' <smp>';'<exp>
+<_exp> ::= <smp>[';'<_exp>]
+    | 'let' <ident> [':' <type>] '=' <smp>';'<_exp>

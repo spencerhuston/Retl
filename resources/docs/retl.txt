@@ -1,13 +1,19 @@
 TODO:
 - Interpreter skeleton w/ type-checking
 - Add more typing in parsing phase
+- Update error reporting functions
+
+Interpreter w/ REPL:
+- Persistent env, pass by reference to each run
+- After run:
+    * Put result value in env
+    * Print out result
+- New run:
+    * Pulls in running env
 
 Possible features?
-- Update error reporting
 - Parallel keyword?
 - Tuple deconstruction?
-
-
 
 
 FEATURES:

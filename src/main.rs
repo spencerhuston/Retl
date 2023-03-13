@@ -8,7 +8,9 @@ use std::error::Error;
 use clap::Parser;
 use std::path::PathBuf;
 use std::fs;
-use log::error;
+use log::{debug, error};
+use crate::defs::expression::Exp;
+use crate::interpreter::interpreter::Interpreter;
 
 use crate::scanner::scanner::Scanner;
 use crate::parser::parser::Parser as RetlParser;
@@ -46,7 +48,7 @@ fn read_retl_file(path_buf: &PathBuf) -> Result<String, Box<dyn Error>> {
     }
 }
 
-fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
+fn make_ast(script: &String) -> Result<Exp, Box<dyn Error>> {
     let scanner = &mut Scanner::init();
     scanner.scan(&script);
 
@@ -58,10 +60,22 @@ fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
     parser.parse(&scanner.tokens);
 
     if parser.error {
-        return Err("One more errors occurred, exiting.".into())
+        Err("One more errors occurred, exiting.".into())
+    } else {
+        Ok(parser.root_exp.clone())
     }
+}
 
-    Ok(())
+fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
+    let interpreter = &mut Interpreter::init();
+    let result = interpreter.interpret(&make_ast(script)?);
+
+    if interpreter.error {
+        Err("One more errors occurred, exiting.".into())
+    } else {
+        debug!("{:?}", result);
+        Ok(())
+    }
 }
 
 fn run_retl_repl() -> Result<(), Box<dyn Error>> {

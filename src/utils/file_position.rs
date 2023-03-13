@@ -11,7 +11,7 @@ impl FilePosition {
         pos_string += &("Line: ".to_string() + &self.line.to_string() + ", column: " + &self.column.to_string() + "\n");
         pos_string += &self.line_text;
         pos_string += "\n";
-        pos_string += &"-".to_string().repeat(self.column - 1);
+        pos_string += &"-".to_string().repeat(self.column);
         pos_string += &"^".to_string();
         pos_string
     }

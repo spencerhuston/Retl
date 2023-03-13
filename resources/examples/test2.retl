@@ -9,9 +9,5 @@ let arr3 = filter(arr2("num"), |x| -> bool {
                     case x: int if x % 2 == 0 => true,
                     case _ => false
                 }
-            })
-            |>
-            map(|x| -> int {
-                x * 2
-            });
+            }) |> map(|x| -> int { x * 2 });
 println("Even nums: {}", arr2)

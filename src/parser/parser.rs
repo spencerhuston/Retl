@@ -1,4 +1,4 @@
-use log::{debug, error};
+use log::{debug, trace, error};
 use std::collections::HashMap;
 
 use crate::scanner::token::{make_empty_token, Token};
@@ -9,9 +9,9 @@ use crate::defs::expression::Literal::*;
 use crate::defs::operator::Operator;
 use crate::defs::retl_type::Type;
 use crate::defs::retl_type::Type::*;
-use crate::utils::file_position::FilePosition;
 
 pub struct Parser {
+    pub error: bool,
     root_exp: Exp,
     tokens: Vec<Token>,
     index: usize,
@@ -51,18 +51,20 @@ fn make_list_def_range(start: usize, end: usize, token: &Token) -> Vec<Exp> {
     range
 }
 
-fn get_fp_from_token(token: &Token) -> FilePosition {
+fn get_fp_from_token(token: &Token) -> String {
     match token {
-        Token::Delimiter{delim: _, fp} => fp.clone(),
-        Token::Keyword{keyword: _, fp} => fp.clone(),
-        Token::Value{value: _, fp} => fp.clone(),
-        Token::Ident{ident: _, fp} => fp.clone()
+        Token::Delimiter{delim: _, fp} => fp.position().clone(),
+        Token::Keyword{keyword: _, fp} => fp.position().clone(),
+        Token::Value{value: _, fp} => fp.position().clone(),
+        Token::Ident{ident: _, fp} => fp.position().clone()
     }
 }
 
 impl Parser {
     pub fn init() -> Parser {
-        Parser{root_exp: Exp{
+        Parser{
+            error: false,
+            root_exp: Exp{
             exp: Expression::Empty,
             exp_type: NullType,
             token: make_empty_token()
@@ -79,10 +81,10 @@ impl Parser {
 
     fn curr(&self) -> Option<Token> {
         if self.index >= self.tokens.len() {
-            debug!("curr: EMPTY");
+            trace!("curr: EMPTY");
             None
         } else {
-            debug!("curr: {:?}", self.tokens[self.index].clone());
+            trace!("curr: {:?}", self.tokens[self.index].clone());
             Some(self.tokens[self.index].clone())
         }
     }
@@ -98,11 +100,13 @@ impl Parser {
         };
 
         if !matched {
-            error!("Expected {:?}, got {}",
-                delim,
-                get_token_as_string(self.tokens[self.index].clone()))
+            self.error = true;
+            error!("Expected {:?}, got {:?}: {}",
+                delim.to_string(),
+                get_token_as_string(self.curr().unwrap().clone()).to_string(),
+                get_fp_from_token(&self.curr().unwrap()));
         } else {
-            debug!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
+            trace!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
         }
 
         self.advance();
@@ -116,11 +120,13 @@ impl Parser {
         };
 
         if !matched {
-            error!("Expected {:?}, got {}",
-                keyword,
-                get_token_as_string(self.tokens[self.index].clone()))
+            self.error = true;
+            error!("Expected {:?}, got {:?}: {}",
+                keyword.to_string(),
+                get_token_as_string(self.curr().unwrap().clone()),
+                get_fp_from_token(&self.curr().unwrap()))
         } else {
-            debug!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
+            trace!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
         }
 
         self.advance();
@@ -134,7 +140,7 @@ impl Parser {
         };
 
         if matched {
-            debug!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
+            trace!("MATCHED DELIM: curr {:?}, delim {:?}", self.curr(), delim);
             self.advance()
         }
 
@@ -148,7 +154,7 @@ impl Parser {
         };
 
         if matched {
-            debug!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
+            trace!("MATCHED KEYWORD: curr {:?}, delim {:?}", self.curr(), keyword);
             self.advance()
         }
 
@@ -158,13 +164,15 @@ impl Parser {
     fn match_ident(&mut self) -> String {
         match self.curr() {
             Some(Token::Ident{ident, fp: _}) => {
-                debug!("MATCHED IDENT: curr {:?}, ident {:?}", self.curr(), ident);
+                trace!("MATCHED IDENT: curr {:?}, ident {:?}", self.curr(), ident);
                 self.advance();
                 ident
             },
             _ => {
-                error!("Expected identifier, got {}",
-                    get_token_as_string(self.tokens[self.index].clone()));
+                self.error = true;
+                error!("Expected identifier, got {:?}: {}",
+                    get_token_as_string(self.curr().unwrap()),
+                    get_fp_from_token(&self.curr().unwrap()));
                 String::from("")
             }
         }
@@ -200,10 +208,8 @@ impl Parser {
         match exp.exp {
             Expression::Lit{lit} if lit != NullLit => lit,
             _ => {
-                error!("Expected non-null literal value: {}", match exp.token {
-                Token::Value{value: _, fp} => fp.position(),
-                _ => "".to_string()
-            });
+                self.error = true;
+                error!("Expected non-null literal value: {:?}", get_fp_from_token(&exp.token));
                 NullLit
             }
         }
@@ -215,7 +221,8 @@ impl Parser {
                 match lit {
                     IntLit{literal} => {
                         if literal < 0 {
-                            error!("Range requires positive integer value: {:?}",
+                            self.error = true;
+                            error!("Range requires positive integer value: {}",
                                 get_fp_from_token(&self.curr().unwrap()));
                             0
                         } else {
@@ -223,14 +230,16 @@ impl Parser {
                         }
                     },
                     _ => {
-                        error!("Range requires positive integer value: {:?}",
+                        self.error = true;
+                        error!("Range requires positive integer value: {}",
                             get_fp_from_token(&self.curr().unwrap()));
                         0
                     }
                 }
             },
             _ => {
-                error!("Range requires positive integer value: {:?}",
+                self.error = true;
+                error!("Range requires positive integer value: {}",
                     get_fp_from_token(&self.curr().unwrap()));
                 0
             }
@@ -240,7 +249,7 @@ impl Parser {
     pub fn parse(&mut self, tokens: &Vec<Token>) {
         self.tokens = tokens.clone();
         self.root_exp = self.parse_expression();
-        debug!("{:#?}", self.root_exp)
+        debug!("ROOT EXPRESSION\n====================\n{:#?}\n====================\n", self.root_exp)
     }
 
     fn parse_expression(&mut self) -> Exp {
@@ -431,7 +440,8 @@ impl Parser {
                             args.insert(0, inner_app);
                         },
                         _ => {
-                            error!("Function chain requires valid function application: {:?}",
+                            self.error = true;
+                            error!("Function chain requires valid function application: {}",
                                 get_fp_from_token(&outer_app.token));
                             ()
                         }
@@ -451,14 +461,16 @@ impl Parser {
                 match lit {
                     IntLit{literal} => literal,
                     _ => {
-                        error!("Tuple access requires integer literal for index: {:?}",
+                        self.error = true;
+                        error!("Tuple access requires integer literal for index: {}",
                                 get_fp_from_token(&index.token));
                         -1
                     }
                 }
             },
             _ => {
-                error!("Tuple access requires integer literal for index: {:?}",
+                self.error = true;
+                error!("Tuple access requires integer literal for index: {}",
                                 get_fp_from_token(&index.token));
                 -1
             }
@@ -574,7 +586,8 @@ impl Parser {
                         let range_start = self.get_int_literal_value(int_literal.exp.clone());
                         let range_end = self.get_int_literal_value(int_literal_range_bound_noninclusive.exp);
                         if range_end <= range_start {
-                            error!("Integer range construction requires valid bounds: {:?}",
+                            self.error = true;
+                            error!("Integer range construction requires valid bounds: {}",
                                 get_fp_from_token(&int_literal_range_bound_noninclusive.token));
                             int_literal
                         } else {
@@ -757,18 +770,21 @@ impl Parser {
                         }
                     },
                     _ => {
-                        error!("Invalid pattern: {:?}",
+                        self.error = true;
+                        error!("Invalid pattern: {}",
                             get_fp_from_token(&lit_pattern.token));
                         Pattern::Any
                     }
                 }
             },
             Some(_) => {
-                error!("Invalid pattern: {:?}",
+                self.error = true;
+                error!("Invalid pattern: {}",
                     get_fp_from_token(&self.curr().unwrap()));
                 Pattern::Any
             },
             _ => {
+                self.error = true;
                 error!("Invalid pattern or EOF");
                 Pattern::Any
             }
@@ -951,11 +967,13 @@ impl Parser {
                 FuncType{param_types, return_type: Box::new(return_type)}
             }
             Some(_) => {
-                error!("Invalid type signature: {:?}",
+                self.error = true;
+                error!("Invalid type signature: {}",
                     get_fp_from_token(&self.curr().unwrap()));
                 UnknownType
             },
             _ => {
+                self.error = true;
                 error!("Invalid type signature or EOF");
                 UnknownType
             }

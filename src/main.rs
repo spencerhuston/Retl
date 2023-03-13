@@ -16,11 +16,15 @@ use crate::parser::parser::Parser as RetlParser;
 #[derive(Debug, Parser)]
 #[clap(name = "RETL", version = "0.1.0", author = "Spencer Huston")]
 struct RetlApp {
-    /// Enable debug mode
+    /// Enable debug mode (optional)
     #[clap(long, short = 'd')]
     debug: bool,
 
-    /// Input file (optional)
+    /// Enable trace mode (optional)
+    #[clap(long, short = 't')]
+    trace: bool,
+
+    /// Retl script file (optional)
     #[clap(long, short = 'f')]
     file: Option<PathBuf>
 }
@@ -44,8 +48,18 @@ fn read_retl_file(path_buf: &PathBuf) -> Result<String, Box<dyn Error>> {
 fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
     let scanner = &mut Scanner::init();
     scanner.scan(&script);
+
+    if scanner.error {
+        return Err("One more errors occurred, exiting.".into())
+    }
+
     let parser = &mut RetlParser::init();
     parser.parse(&scanner.tokens);
+
+    if parser.error {
+        return Err("One more errors occurred, exiting.".into())
+    }
+
     Ok(())
 }
 
@@ -57,7 +71,20 @@ fn run_retl_repl() -> Result<(), Box<dyn Error>> {
 fn main() {
     let retl_args = RetlApp::parse();
 
-    env_logger::init();
+    if retl_args.debug {
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Debug)
+            .format_target(false).format_timestamp(None).init();
+    } else if retl_args.trace {
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Trace)
+            .format_target(false).format_timestamp(None).init();
+    } else {
+        env_logger::builder()
+            .filter_level(log::LevelFilter::Info)
+            .format_target(false).format_timestamp(None).init();
+    }
+
     let result = match retl_args.file {
         Some(path_buf) => {
             match read_retl_file(&path_buf) {

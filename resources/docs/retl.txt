@@ -2,6 +2,7 @@ TODO:
 - Add more typing in parsing phase
 
 Possible features?
+- Update error reporting
 - Parallel keyword?
 - Tuple deconstruction?
 

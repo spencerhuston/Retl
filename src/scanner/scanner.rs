@@ -12,6 +12,7 @@ use crate::utils::file_position::FilePosition;
 use crate::scanner::token::Token;
 
 pub struct Scanner {
+    pub error: bool,
     pub tokens: Vec<Token>
 }
 
@@ -100,7 +101,7 @@ fn token_adjusted_fp(file_pos: &FilePosition, token: &String) -> FilePosition {
 
 impl Scanner {
     pub fn init() -> Scanner {
-        Scanner{ tokens: vec![] }
+        Scanner{ error: false, tokens: vec![] }
     }
 
     fn push_delim_token(&mut self, token: &String, file_pos: &FilePosition) {
@@ -145,6 +146,7 @@ impl Scanner {
                 }
             )
         } else {
+            self.error = true;
             error!("Unexpected: {}", file_pos.position());
         }
         token.clear()
@@ -169,7 +171,7 @@ impl Scanner {
     }
 
     pub fn scan(&mut self, script: &String) {
-        debug!("====================\n{}\n====================", script);
+        debug!("SCRIPT\n====================\n{}\n====================\n", script);
 
         let lines = script.lines();
         let text: Vec<char> = script.chars().collect();
@@ -187,7 +189,8 @@ impl Scanner {
             file_pos.line_text = lines.clone().nth(file_pos.line).unwrap().to_string();
 
             if !is_valid_character(&c, &inside_quotes.borrow()) {
-                error!("Invalid character: {}", file_pos.position());
+                self.error = true;
+                error!("Invalid character \'{}\': {}", &c, file_pos.position());
                 continue;
             } 
             
@@ -223,9 +226,10 @@ impl Scanner {
         }
         
         self.push_non_delim_token(&mut token, &incremented_fp(&file_pos));
-
+        debug!("TOKENS\n====================\n");
         for t in self.tokens.iter() {
-            println!("{:?}\n", t)
+            debug!("{:?}", t);
         }
+        debug!("\n====================\n");
     }
 }

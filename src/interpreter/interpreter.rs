@@ -1,12 +1,15 @@
 use crate::defs::expression::{Exp, Expression, Literal};
+use crate::defs::retl_type::type_conforms;
 use crate::defs::retl_type::Type;
-use crate::interpreter::value::Value;
+use crate::interpreter::value::{Value, Env, Val};
 use crate::scanner::token::{make_empty_token, Token};
 
 pub struct Interpreter {
     pub error: bool,
     root_exp: Exp
 }
+
+fn make_error_value() -> Value { Value{value: Val::Error, val_type: Type::UnknownType} }
 
 impl Interpreter {
     pub fn init() -> Interpreter {
@@ -20,39 +23,60 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self, exp: &Exp) -> Value {
-        match exp.exp.clone() {
-            Expression::Lit{..} => self.interpret_literal(&exp),
-            Expression::Branch{..} => self.interpret_branch(&exp),
+    // TODO: For REPL
+    // fn run(&mut self, exp: &Exp) -> Value {
+    //     self.interpret(exp);
+    // }
+
+    pub fn interpret(&mut self, exp: &Exp, env: &Env, expected_type: &Type) -> Value {
+        match &exp.exp {
+            Expression::Lit{..} => self.interpret_literal(&exp, &expected_type),
+            //Expression::Let{..} => self.interpret_let(&exp, env),
+            Expression::Branch{..} => self.interpret_branch(&exp, env, expected_type),
             _ => {
                 // TODO: Throw error here, invalid expression
-                Value::Error
+                make_error_value()
             }
         }
     }
 
-    fn interpret_literal(&mut self, exp: &Exp) -> Value {
+    fn interpret_literal(&mut self, exp: &Exp, expected_type: &Type) -> Value {
+        type_conforms(&exp.exp_type, expected_type);
         match &exp.exp {
             Expression::Lit{lit} => {
                 match lit {
-                    Literal::IntLit{literal} => Value::IntValue{value: literal.clone()},
-                    Literal::BoolLit{literal} => Value::BoolValue{value: literal.clone()},
-                    Literal::CharLit{literal} => Value::CharValue{value: literal.clone()},
-                    Literal::StringLit{literal} => Value::StringValue{value: literal.clone()},
-                    Literal::NullLit => Value::NullValue,
+                    Literal::IntLit{literal} =>
+                        Value{value: Val::IntValue{value: literal.clone()}, val_type: Type::IntType},
+                    Literal::BoolLit{literal} =>
+                        Value{value: Val::BoolValue{value: literal.clone()}, val_type: Type::BoolType},
+                    Literal::CharLit{literal} =>
+                        Value{value: Val::CharValue{value: literal.clone()}, val_type: Type::CharType},
+                    Literal::StringLit{literal} =>
+                        Value{value: Val::StringValue{value: literal.clone()}, val_type: Type::StringType},
+                    Literal::NullLit =>
+                        Value{value: Val::NullValue, val_type: Type::NullType}
                 }
             },
             _ => {
                 // TODO: Throw error here, invalid expression
-                Value::Error
+                make_error_value()
             }
         }
     }
 
-    // fn interpret_let(&mut self) -> Value {
+    // fn interpret_let(&mut self, exp: &Exp, env: Env, expected_type: Type) -> Value {
+    //     match &exp.exp {
+    //         l@Expression::Let{..} => {
     //
+    //             Value::Error
+    //         },
+    //         _ => {
+    //             // TODO: Throw error here, invalid expression
+    //             make_error_value()
+    //         }
+    //     }
     // }
-    //
+
     // fn interpret_alias(&mut self) -> Value {
     //
     // }
@@ -73,35 +97,39 @@ impl Interpreter {
     //
     // }
 
-    fn interpret_branch(&mut self, exp: &Exp) -> Value {
+    fn interpret_branch(&mut self, exp: &Exp, env: &Env, expected_type: &Type) -> Value {
         match &exp.exp {
             Expression::Branch{
                 condition,
                 if_branch,
                 else_branch
             } => {
-                // Type check condition is boolean
                 // Type check if and else return same type
-                match self.interpret(&**condition) {
-                    Value::BoolValue{value} => {
+                match &**else_branch {
+                    Some(else_exp) => type_conforms(&if_branch.exp_type, &else_exp.exp_type),
+                    _ => type_conforms(&if_branch.exp_type, &Type::NullType)
+                };
+
+                match self.interpret(&**condition, env, &Type::BoolType).value {
+                    Val::BoolValue{value} => {
                         if value {
-                            self.interpret(&if_branch)
+                            self.interpret(&if_branch, env, expected_type)
                         } else {
                             match &**else_branch {
-                                Some(else_exp) => self.interpret(&else_exp),
-                                _ => Value::NullValue
+                                Some(else_exp) => self.interpret(&else_exp, env, expected_type),
+                                _ => Value{value: Val::NullValue, val_type: Type::NullType }
                             }
                         }
                     },
                     _ => {
                         // TODO: Throw error here, not a valid condition
-                        Value::Error
+                        make_error_value()
                     }
                 }
             },
             _ => {
                 // TODO: Throw error here, invalid expression
-                Value::Error
+                make_error_value()
             }
         }
     }

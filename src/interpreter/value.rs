@@ -4,10 +4,16 @@ use strum_macros::Display;
 use crate::defs::expression::Exp;
 use crate::defs::retl_type::Type;
 
-type Env = HashMap<String, Value>;
+pub type Env = HashMap<String, Value>;
+
+#[derive(Debug, Clone, Eq, PartialEq)]
+pub struct Value {
+    pub value: Val,
+    pub val_type: Type
+}
 
 #[derive(Display, Debug, Clone, Eq, PartialEq)]
-pub enum Value {
+pub enum Val {
     IntValue{value: i32},
     BoolValue{value: bool},
     CharValue{value: String},

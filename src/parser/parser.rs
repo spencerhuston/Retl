@@ -1,7 +1,7 @@
 use log::{debug, trace, error};
 use std::collections::HashMap;
 
-use crate::scanner::token::{make_empty_token, Token};
+use crate::scanner::token::{Token, make_empty_token, get_fp_from_token};
 use crate::defs::keyword::Keyword;
 use crate::defs::delimiter::Delimiter;
 use crate::defs::expression::{Exp, Expression, Literal, Parameter, Case, Pattern};
@@ -49,15 +49,6 @@ fn make_list_def_range(start: usize, end: usize, token: &Token) -> Vec<Exp> {
         index += 1;
     }
     range
-}
-
-fn get_fp_from_token(token: &Token) -> String {
-    match token {
-        Token::Delimiter{delim: _, fp} => fp.position().clone(),
-        Token::Keyword{keyword: _, fp} => fp.position().clone(),
-        Token::Value{value: _, fp} => fp.position().clone(),
-        Token::Ident{ident: _, fp} => fp.position().clone()
-    }
 }
 
 impl Parser {

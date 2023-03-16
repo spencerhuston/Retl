@@ -2,7 +2,7 @@ use crate::defs::expression::{Exp, Expression, Literal};
 use crate::defs::retl_type::type_conforms;
 use crate::defs::retl_type::Type;
 use crate::interpreter::value::{Value, Env, Val};
-use crate::scanner::token::{make_empty_token, Token};
+use crate::scanner::token::{get_fp_from_token, make_empty_token, Token};
 
 pub struct Interpreter {
     pub error: bool,
@@ -24,8 +24,13 @@ impl Interpreter {
     }
 
     // TODO: For REPL
-    // fn run(&mut self, exp: &Exp) -> Value {
-    //     self.interpret(exp);
+    // fn run(&mut self, script: &String) -> Value {
+    //     let env = interpreter::value::Env::new();
+    //     let result = interpreter.interpret(
+    //         &make_ast(script)?,
+    //         &env,
+    //         &Type::UnknownType
+    //     );
     // }
 
     pub fn interpret(&mut self, exp: &Exp, env: &Env, expected_type: &Type) -> Value {
@@ -41,7 +46,7 @@ impl Interpreter {
     }
 
     fn interpret_literal(&mut self, exp: &Exp, expected_type: &Type) -> Value {
-        type_conforms(&exp.exp_type, expected_type);
+        type_conforms(&exp.exp_type, expected_type, &exp.token);
         match &exp.exp {
             Expression::Lit{lit} => {
                 match lit {
@@ -106,8 +111,8 @@ impl Interpreter {
             } => {
                 // Type check if and else return same type
                 match &**else_branch {
-                    Some(else_exp) => type_conforms(&if_branch.exp_type, &else_exp.exp_type),
-                    _ => type_conforms(&if_branch.exp_type, &Type::NullType)
+                    Some(else_exp) => type_conforms(&if_branch.exp_type, &else_exp.exp_type, &exp.token),
+                    _ => type_conforms(&if_branch.exp_type, &Type::NullType, &exp.token)
                 };
 
                 match self.interpret(&**condition, env, &Type::BoolType).value {

@@ -39,3 +39,12 @@ impl Token {
         }
     }
 }
+
+pub fn get_fp_from_token(token: &Token) -> String {
+    match token {
+        Token::Delimiter{delim: _, fp} => fp.position().clone(),
+        Token::Keyword{keyword: _, fp} => fp.position().clone(),
+        Token::Value{value: _, fp} => fp.position().clone(),
+        Token::Ident{ident: _, fp} => fp.position().clone()
+    }
+}

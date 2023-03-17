@@ -33,10 +33,12 @@ impl Interpreter {
     //     );
     // }
 
-    pub fn interpret(&mut self, exp: &Exp, env: &Env, expected_type: &Type) -> Value {
+    pub fn interpret(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
         match &exp.exp {
-            Expression::Lit{..} => self.interpret_literal(&exp, &expected_type),
-            //Expression::Let{..} => self.interpret_let(&exp, env),
+            Expression::Lit{..} => self.interpret_literal(&exp, expected_type),
+            Expression::Let{..} => self.interpret_let(&exp, env, expected_type),
+            Expression::Primitive{..} => self.interpret_primitive(&exp, env, expected_type),
+            Expression::Reference{..} => self.interpret_reference(&exp, env, expected_type),
             Expression::Branch{..} => self.interpret_branch(&exp, env, expected_type),
             _ => {
                 // TODO: Throw error here, invalid expression
@@ -69,18 +71,22 @@ impl Interpreter {
         }
     }
 
-    // fn interpret_let(&mut self, exp: &Exp, env: Env, expected_type: Type) -> Value {
-    //     match &exp.exp {
-    //         l@Expression::Let{..} => {
-    //
-    //             Value::Error
-    //         },
-    //         _ => {
-    //             // TODO: Throw error here, invalid expression
-    //             make_error_value()
-    //         }
-    //     }
-    // }
+    fn interpret_let(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        match &exp.exp {
+            Expression::Let{ident, let_type, let_exp, after_let_exp} => {
+                let resolved_exp = self.interpret(let_exp, env, let_type);
+                env.insert(ident.clone(), resolved_exp);
+                match &**after_let_exp {
+                    Some(after) => self.interpret(after, env, expected_type),
+                    _ => Value{value: Val::NullValue, val_type: Type::NullType}
+                }
+            },
+            _ => {
+                // TODO: Throw error here, invalid expression
+                make_error_value()
+            }
+        }
+    }
 
     // fn interpret_alias(&mut self) -> Value {
     //
@@ -93,16 +99,50 @@ impl Interpreter {
     // fn interpret_match(&mut self) -> Value {
     //
     // }
-    //
-    // fn interpret_primitive(&mut self) -> Value {
-    //
-    // }
-    //
-    // fn interpret_reference(&mut self) -> Value {
-    //
-    // }
 
-    fn interpret_branch(&mut self, exp: &Exp, env: &Env, expected_type: &Type) -> Value {
+    fn interpret_primitive(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        match &exp.exp {
+            Expression::Primitive{operator, left, right} => {
+                let op_type = operator.get_type();
+                let left_value = self.interpret(left, env, &op_type);
+                let right_value = self.interpret(right, env, &op_type);
+                if operator.types_allowed(&left_value.val_type, &right_value.val_type) {
+                    operator.interpret(left, right)
+                } else {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            _ => {
+                // TODO: Throw error here, invalid expression
+                make_error_value()
+            }
+        }
+    }
+
+    fn interpret_reference(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        match &exp.exp {
+            Expression::Reference{ident} => {
+                let ref_value = env.get(ident).clone();
+                match ref_value {
+                    Some(r) => {
+                        type_conforms(&r.val_type, expected_type, &exp.token);
+                        r.clone()
+                    },
+                    _ => {
+                        // TODO: Throw error here, reference does not exist
+                        make_error_value()
+                    }
+                }
+            },
+            _ => {
+                // TODO: Throw error here, invalid expression
+                make_error_value()
+            }
+        }
+    }
+
+    fn interpret_branch(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
         match &exp.exp {
             Expression::Branch{
                 condition,

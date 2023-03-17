@@ -1,7 +1,7 @@
 TODO:
-- Interpreter skeleton w/ type-checking
 - Add more typing in parsing phase
 - Update error reporting functions
+- use application on string to get character
 
 Interpreter w/ REPL:
 - Persistent env, pass by reference to each run
@@ -14,6 +14,8 @@ Interpreter w/ REPL:
 Possible features?
 - Parallel keyword?
 - Tuple deconstruction?
+- lazy evaluation?
+- as keyword?
 
 
 FEATURES:
@@ -44,7 +46,7 @@ FEATURES:
 - range
 7. collection operators
 - list append operator: ++
-- list/dict access operator: []
+- list/dict access operator: ()
 - tuple access operator: .
 8. REPL
 - args:
@@ -55,7 +57,6 @@ FEATURES:
     2. scan, parse, type check with environment from REPL
     3. run new code
     4. add to env
-9. lazy evaluation
 10. strong, dynamic typing
 11. Basic string interpolation for prints
 12. tuple deconstruction

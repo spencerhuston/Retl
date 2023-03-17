@@ -4,20 +4,21 @@ mod defs;
 mod utils;
 mod interpreter;
 
-use std::collections::HashMap;
+use log::{debug, error};
+use env_logger::Env;
 use std::error::Error;
 use clap::Parser;
 use std::path::PathBuf;
 use std::fs;
-use env_logger::Env;
-use log::{debug, error};
-use crate::defs::expression::Exp;
-use crate::defs::retl_type::Type;
-use crate::interpreter::interpreter::Interpreter;
-use crate::interpreter::value::Value;
+use std::collections::HashMap;
 
 use crate::scanner::scanner::Scanner;
 use crate::parser::parser::Parser as RetlParser;
+use crate::interpreter::interpreter::Interpreter;
+
+use crate::defs::expression::Exp;
+use crate::defs::retl_type::Type;
+use crate::interpreter::value::Value;
 
 /// RETL script and REPL runner
 #[derive(Debug, Parser)]
@@ -72,10 +73,10 @@ fn make_ast(script: &String) -> Result<Exp, Box<dyn Error>> {
 
 fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
     let interpreter = &mut Interpreter::init();
-    let env = interpreter::value::Env::new();
+    let mut env = interpreter::value::Env::new();
     let result = interpreter.interpret(
         &make_ast(script)?,
-        &env,
+        &mut env,
         &Type::UnknownType
     );
 

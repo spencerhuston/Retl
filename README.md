@@ -21,4 +21,3 @@ Supported features in-progress:
   * predicates
 - Builtin functions: map, filter, foreach, etc.
 - user-defined functions as lambdas
-- Lazy evaluation

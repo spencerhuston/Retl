@@ -1,2 +1,2 @@
-let a = if (2 > 4) { 'a' } else { 4 };
+let a = if (2 > 4 == false) { 'a' } else { 'b' };
 a

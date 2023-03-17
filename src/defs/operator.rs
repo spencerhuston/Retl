@@ -197,9 +197,49 @@ impl Operator {
                     make_error_value()
                 }
             },
-            // Operator::Equal => match (left.value.clone(), right.value.clone()) {
-            //
-            // },
+            Operator::Equal => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 == v2}, val_type: Type::BoolType}
+                },
+                (Val::BoolValue{value: v1}, Val::BoolValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 == v2}, val_type: Type::BoolType}
+                },
+                (Val::CharValue{value: v1}, Val::CharValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 == v2}, val_type: Type::BoolType}
+                },
+                (Val::StringValue{value: v1}, Val::StringValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 == v2}, val_type: Type::BoolType}
+                },
+                (Val::ListValue{values: v1}, Val::ListValue{values: v2}) => {
+                    Value{
+                        value: Val::BoolValue{value: v1.iter().zip(v2.clone()).all(|(l1, l2)| {
+                            match self.interpret(l1, &l2).value {
+                                Val::BoolValue{value} => value,
+                                _ => false
+                            }
+                        })},
+                        val_type: Type::BoolType
+                    }
+                },
+                (Val::TupleValue{values: v1}, Val::TupleValue{values: v2}) => {
+                    Value{
+                        value: Val::BoolValue{value: v1.iter().zip(v2.clone()).all(|(t1, t2)| {
+                            match self.interpret(t1, &t2).value {
+                                Val::BoolValue{value} => value,
+                                _ => false
+                            }
+                        })},
+                        val_type: Type::BoolType
+                    }
+                },
+                // (Val::DictValue{values: v1}, Val::DictValue{values: v2}) => {
+                //
+                // },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
             Operator::And => match (left.value.clone(), right.value.clone()) {
                 (Val::BoolValue{value: v1}, Val::BoolValue{value: v2}) => {
                     Value{value: Val::BoolValue{value: v1 && v2}, val_type: Type::BoolType}

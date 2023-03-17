@@ -56,7 +56,6 @@ fn well_formed(t: &Type, token: &Token) -> Type {
     }
 }
 
-// TODO: Restrict dict key type to literals
 pub fn type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
     trace!("t1: {:?}, t2: {:?}, token: {:?}", t1, t2, token);
     match (t1, t2) {

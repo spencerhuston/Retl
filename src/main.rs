@@ -83,7 +83,7 @@ fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
     if interpreter.error {
         Err("One more errors occurred, exiting.".into())
     } else {
-        debug!("{:?}", result);
+        println!("{:?}", result);
         Ok(())
     }
 }

@@ -2,6 +2,7 @@ use log::error;
 use strum_macros::Display;
 use crate::scanner::token::{Token, get_fp_from_token};
 use crate::utils::file_position::FilePosition;
+use crate::Value;
 
 #[derive(Display, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Type {
@@ -53,7 +54,9 @@ fn well_formed(t: &Type, token: &Token) -> Type {
     }
 }
 
+// TODO: Restrict dict key type to literals
 pub fn type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
+    println!("t1: {:?}, t2: {:?}, token: {:?}", t1, t2, token);
     match (t1, t2) {
         (_, _) if t1 == t2 => well_formed(t1, token),
         (Type::ListType{list_type: l1}, Type::ListType{list_type: l2}) => {
@@ -94,6 +97,19 @@ pub fn type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
                 t2.as_string(),
                 get_fp_from_token(&token));
             Type::UnknownType
+        }
+    }
+}
+
+pub fn concat_tuple_types(left: &Value, right: &Value) -> Vec<Type> {
+    match (left.val_type.clone(), right.val_type.clone()) {
+        (Type::TupleType{tuple_types: tt1}, Type::TupleType{tuple_types: tt2}) => {
+            tt1.clone().append(&mut tt2.clone());
+            tt1
+        },
+        _ => {
+            // TODO: Throw error here, invalid types for operand
+            vec![Type::UnknownType]
         }
     }
 }

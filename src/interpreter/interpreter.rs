@@ -9,7 +9,7 @@ pub struct Interpreter {
     root_exp: Exp
 }
 
-fn make_error_value() -> Value { Value{value: Val::Error, val_type: Type::UnknownType} }
+pub fn make_error_value() -> Value { Value{value: Val::Error, val_type: Type::UnknownType} }
 
 impl Interpreter {
     pub fn init() -> Interpreter {
@@ -106,12 +106,9 @@ impl Interpreter {
                 let op_type = operator.get_type();
                 let left_value = self.interpret(left, env, &op_type);
                 let right_value = self.interpret(right, env, &op_type);
-                if operator.types_allowed(&left_value.val_type, &right_value.val_type) {
-                    operator.interpret(left, right)
-                } else {
-                    // TODO: Throw error here, invalid types for operand
-                    make_error_value()
-                }
+                let result = operator.interpret(&left_value, &right_value);
+                type_conforms(&result.val_type, expected_type, &exp.token);
+                result
             },
             _ => {
                 // TODO: Throw error here, invalid expression

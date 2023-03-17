@@ -1,5 +1,8 @@
 use strum_macros::Display;
 use crate::{Type, Value};
+use crate::defs::retl_type::concat_tuple_types;
+use crate::interpreter::interpreter::make_error_value;
+use crate::interpreter::value::Val;
 
 #[derive(Display, Debug, Eq, PartialEq, Clone)]
 pub enum Operator {
@@ -99,81 +102,153 @@ impl Operator {
         }
     }
 
-    pub fn types_allowed(&self, t1: &Type, t2: &Type) -> bool {
+    pub fn interpret(&self, left: &Value, right: &Value) -> Value {
         match *self {
-            Operator::Plus => match (t1, t2) {
-                (Type::IntType, Type::IntType) => true,
-                (Type::CharType, Type::CharType) => true,
-                (Type::StringType, Type::StringType) => true,
-                (Type::CharType, Type::StringType) => true,
-                (Type::StringType, Type::CharType) => true,
-                _ => false
-            },
-            Operator::Minus |
-            Operator::Multiply |
-            Operator::Divide |
-            Operator::Modulus => match (t1, t2) {
-                (Type::IntType, Type::IntType) => true,
-                _ => false
-            },
-            Operator::GreaterThan |
-            Operator::LessThan |
-            Operator::GreaterThanEqualTo |
-            Operator::LessThanEqualTo => match (t1, t2) {
-                (Type::IntType, Type::IntType) => true,
-                _ => false
-            },
-            Operator::Equal => match (t1, t2) {
-                (Type::IntType, Type::IntType) => true,
-                (Type::BoolType, Type::BoolType) => true,
-                (Type::CharType, Type::CharType) => true,
-                (Type::StringType, Type::StringType) => true,
-                (Type::ListType{list_type: l1},
-                    Type::ListType{list_type: l2}) => {
-                    self.types_allowed(l1, l2)
+            Operator::Plus => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::IntValue{value: v1 + v2}, val_type: Type::IntType}
                 },
-                (Type::TupleType{tuple_types: tts1},
-                    Type::TupleType{tuple_types: tts2}) => {
-                    tts1.iter()
-                        .zip(tts2)
-                        .all(|(tt1, tt2)| { self.types_allowed(tt1 ,tt2) })
+                (Val::CharValue{value: v1}, Val::CharValue{value: v2}) => {
+                    Value{value: Val::CharValue{value: v1 + &*v2 }, val_type: Type::CharType}
                 },
-                (Type::DictType{key_type: k1, value_type: v1},
-                    Type::DictType{key_type: k2, value_type: v2}) => {
-                    self.types_allowed(k1, k2) && self.types_allowed(v1, v2)
+                (Val::StringValue{value: v1}, Val::StringValue{value: v2}) => {
+                    Value{value: Val::StringValue{value: v1 + &*v2 }, val_type: Type::StringType}
                 },
-                _ => false
+                (Val::CharValue{value: v1}, Val::StringValue{value: v2}) => {
+                    Value{value: Val::StringValue{value: v1 + &*v2 }, val_type: Type::StringType}
+                },
+                (Val::StringValue{value: v1}, Val::CharValue{value: v2}) => {
+                    Value{value: Val::StringValue{value: v1 + &*v2 }, val_type: Type::StringType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
             },
-            Operator::Not |
-            Operator::And |
-            Operator::Or => match (t1, t2) {
-                (Type::BoolType, Type::BoolType) => true,
-                _ => false
+            Operator::Minus => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::IntValue{value: v1 - v2}, val_type: Type::IntType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
             },
-            Operator::CollectionConcat => match (t1, t2) {
-                (Type::ListType{..}, Type::ListType{..}) => true,
-                (Type::TupleType{..}, Type::TupleType{..}) => true,
-                _ => false
+            Operator::Multiply => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::IntValue{value: v1 * v2}, val_type: Type::IntType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            Operator::Divide => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::IntValue{value: v1 / v2}, val_type: Type::IntType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            Operator::Modulus => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::IntValue{value: v1 % v2}, val_type: Type::IntType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            Operator::GreaterThan => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 > v2}, val_type: Type::BoolType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            Operator::LessThan => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 < v2}, val_type: Type::BoolType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            Operator::GreaterThanEqualTo => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 >= v2}, val_type: Type::BoolType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            Operator::LessThanEqualTo => match (left.value.clone(), right.value.clone()) {
+                (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 <= v2}, val_type: Type::BoolType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            // Operator::Equal => match (left.value.clone(), right.value.clone()) {
+            //
+            // },
+            Operator::And => match (left.value.clone(), right.value.clone()) {
+                (Val::BoolValue{value: v1}, Val::BoolValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 && v2}, val_type: Type::BoolType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            Operator::Or => match (left.value.clone(), right.value.clone()) {
+                (Val::BoolValue{value: v1}, Val::BoolValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 || v2}, val_type: Type::BoolType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    make_error_value()
+                }
+            },
+            Operator::CollectionConcat => match (left.value.clone(), right.value.clone()) {
+                (Val::ListValue{values: v1}, Val::ListValue{values: v2}) => {
+                    v1.clone().append(&mut v2.clone());
+                    Value{
+                        value: Val::ListValue{values: v1},
+                        val_type: left.val_type.clone()
+                    }
+                },
+                (Val::TupleValue{values: tt1}, Val::TupleValue{values: tt2}) => {
+                    tt1.clone().append(&mut tt2.clone());
+                    Value{
+                        value: Val::TupleValue{values: tt1},
+                        val_type: Type::TupleType{tuple_types: concat_tuple_types(&left, &right)}
+                    }
+                },
+                // (Val::DictValue{values: v1}, Val::DictValue{values: v2}) => { TODO
+                //     v1.clone().append(&mut v2.clone());
+                //     Value{
+                //         value: Val::ListValue{values: v1},
+                //         val_type: left.val_type.clone()
+                //     }
+                // },
+                _ => {
+                    // TODO: Throw error here, invalid operand
+                    make_error_value()
+                }
+            },
+            _ => {
+                // TODO: Throw error here, invalid operand
+                make_error_value()
             }
         }
     }
-
-    // pub fn interpret(left: &Value, right: &Value) -> Value {
-    //     match *self {
-    //         Operator::Plus => ,
-    //         Operator::Minus => ,
-    //         Operator::Multiply => ,
-    //         Operator::Divide => ,
-    //         Operator::Modulus => ,
-    //         Operator::GreaterThan => ,
-    //         Operator::LessThan => ,
-    //         Operator::GreaterThanEqualTo => ,
-    //         Operator::LessThanEqualTo => ,
-    //         Operator::Equal => ,
-    //         Operator::Not => ,
-    //         Operator::And => ,
-    //         Operator::Or => ,
-    //         Operator::CollectionConcat => ,
-    //     }
-    // }
 }

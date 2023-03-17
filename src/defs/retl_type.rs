@@ -1,4 +1,4 @@
-use log::error;
+use log::{error, trace};
 use strum_macros::Display;
 use crate::scanner::token::{Token, get_fp_from_token};
 use crate::utils::file_position::FilePosition;
@@ -21,7 +21,9 @@ pub enum Type {
 
 fn well_formed(t: &Type, token: &Token) -> Type {
     match t {
-        Type::ListType{list_type} => well_formed(&**list_type, token),
+        Type::ListType{list_type} => Type::ListType{
+            list_type: Box::new(well_formed(&**list_type, token))
+        },
         Type::TupleType{tuple_types} => {
             let mut tts: Vec<Type> = vec![];
             for tt in tuple_types.iter() {
@@ -56,7 +58,7 @@ fn well_formed(t: &Type, token: &Token) -> Type {
 
 // TODO: Restrict dict key type to literals
 pub fn type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
-    println!("t1: {:?}, t2: {:?}, token: {:?}", t1, t2, token);
+    trace!("t1: {:?}, t2: {:?}, token: {:?}", t1, t2, token);
     match (t1, t2) {
         (_, _) if t1 == t2 => well_formed(t1, token),
         (Type::ListType{list_type: l1}, Type::ListType{list_type: l2}) => {
@@ -116,9 +118,10 @@ pub fn concat_tuple_types(left: &Value, right: &Value) -> Vec<Type> {
 
 fn type_list_as_string(ts: &Vec<Type>) -> String {
     let mut type_str = String::from("");
-    for t in ts {
-        type_str.push_str(&*t.as_string())
+    for i in 0..ts.len() - 1 {
+        type_str.push_str(&*(ts[i].as_string() + ","))
     }
+    type_str.push_str(&*ts.last().unwrap().as_string());
     type_str
 }
 

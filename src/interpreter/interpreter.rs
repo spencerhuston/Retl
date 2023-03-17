@@ -1,3 +1,5 @@
+use log::{debug, trace, error};
+
 use crate::defs::expression::{Exp, Expression, Literal};
 use crate::defs::retl_type::type_conforms;
 use crate::defs::retl_type::Type;
@@ -34,12 +36,15 @@ impl Interpreter {
     // }
 
     pub fn interpret(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret: {:?}", exp);
         match &exp.exp {
             Expression::Lit{..} => self.interpret_literal(&exp, expected_type),
             Expression::Let{..} => self.interpret_let(&exp, env, expected_type),
             Expression::Primitive{..} => self.interpret_primitive(&exp, env, expected_type),
             Expression::Reference{..} => self.interpret_reference(&exp, env, expected_type),
             Expression::Branch{..} => self.interpret_branch(&exp, env, expected_type),
+            Expression::ListDef{..} => self.interpret_list_def(&exp, env, expected_type),
+            Expression::TupleDef{..} => self.interpret_tuple_def(&exp, env, expected_type),
             _ => {
                 // TODO: Throw error here, invalid expression
                 make_error_value()
@@ -48,6 +53,7 @@ impl Interpreter {
     }
 
     fn interpret_literal(&mut self, exp: &Exp, expected_type: &Type) -> Value {
+        trace!("interpret_literal: {:?}", exp);
         type_conforms(&exp.exp_type, expected_type, &exp.token);
         match &exp.exp {
             Expression::Lit{lit} => {
@@ -72,6 +78,7 @@ impl Interpreter {
     }
 
     fn interpret_let(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_let: {:?}", exp);
         match &exp.exp {
             Expression::Let{ident, let_type, let_exp, after_let_exp} => {
                 let resolved_exp = self.interpret(let_exp, env, let_type);
@@ -101,6 +108,7 @@ impl Interpreter {
     // }
 
     fn interpret_primitive(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_primitive: {:?}", exp);
         match &exp.exp {
             Expression::Primitive{operator, left, right} => {
                 let op_type = exp.exp_type.clone();
@@ -118,6 +126,7 @@ impl Interpreter {
     }
 
     fn interpret_reference(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_reference: {:?}", exp);
         match &exp.exp {
             Expression::Reference{ident} => {
                 let ref_value = env.get(ident).clone();
@@ -140,13 +149,13 @@ impl Interpreter {
     }
 
     fn interpret_branch(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_branch: {:?}", exp);
         match &exp.exp {
             Expression::Branch{
                 condition,
                 if_branch,
                 else_branch
             } => {
-                // Type check if and else return same type
                 match &**else_branch {
                     Some(else_exp) => type_conforms(&if_branch.exp_type, &else_exp.exp_type, &exp.token),
                     _ => type_conforms(&if_branch.exp_type, &Type::NullType, &exp.token)
@@ -176,14 +185,57 @@ impl Interpreter {
         }
     }
 
-    // fn interpret_list_def(&mut self) -> Value {
-    //
-    // }
-    //
-    // fn interpret_tuple_def(&mut self) -> Value {
-    //
-    // }
-    //
+    fn interpret_list_def(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_list_def: {:?}", exp);
+        match &exp.exp {
+            Expression::ListDef{values} => {
+                let mut list_values: Vec<Value> = vec![];
+                let expected_list_type = type_conforms(&exp.exp_type, expected_type, &exp.token);
+                let list_type = match expected_list_type.clone() {
+                    Type::ListType{list_type} => *list_type,
+                    _ => Type::UnknownType
+                };
+                for v in values {
+                    list_values.push(self.interpret(v, env, &list_type))
+                }
+                Value{value: Val::ListValue{values: list_values}, val_type: expected_list_type}
+            },
+            _ => {
+                // TODO: Throw error here, invalid expression
+                make_error_value()
+            }
+        }
+    }
+
+    fn interpret_tuple_def(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_tuple_def: {:?}", exp);
+        match &exp.exp {
+            Expression::TupleDef{values} => {
+                let mut tuple_values: Vec<Value> = vec![];
+                let expected_tuple_type = type_conforms(&exp.exp_type, expected_type, &exp.token);
+                let mut expected_tuple_types = match expected_tuple_type {
+                    Type::TupleType{tuple_types} => tuple_types,
+                    _ => vec![Type::UnknownType; values.len()]
+                };
+                for (v, t) in values.iter().zip(expected_tuple_types) {
+                    tuple_values.push(self.interpret(v, env, &t))
+                }
+                let mut tuple_types: Vec<Type> = vec![];
+                for t in tuple_values.clone() {
+                    tuple_types.push(t.val_type)
+                }
+                Value{
+                    value: Val::TupleValue{values: tuple_values},
+                    val_type: Type::TupleType{tuple_types}
+                }
+            },
+            _ => {
+                // TODO: Throw error here, invalid expression
+                make_error_value()
+            }
+        }
+    }
+
     // fn interpret_tuple_access(&mut self) -> Value {
     //
     // }

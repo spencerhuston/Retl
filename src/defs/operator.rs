@@ -1,6 +1,6 @@
 use strum_macros::Display;
-use crate::{Type, Value};
-use crate::defs::retl_type::concat_tuple_types;
+use crate::{Exp, Type, Value};
+use crate::defs::retl_type::{concat_tuple_types, type_conforms};
 use crate::interpreter::interpreter::make_error_value;
 use crate::interpreter::value::Val;
 
@@ -71,8 +71,8 @@ impl Operator {
 
     pub fn get_precedence(&self) -> i32 {
         match *self {
-            Operator::And | Operator::Or | Operator::CollectionConcat => 0,
-            Operator::Plus | Operator::Minus => 2,
+            Operator::And | Operator::Or => 0,
+            Operator::Plus | Operator::Minus | Operator::CollectionConcat => 2,
             Operator::Multiply | Operator::Divide | Operator::Modulus => 3,
             _ => 1
         }
@@ -83,9 +83,9 @@ impl Operator {
             self.get_precedence() >= min
     }
 
-    pub fn get_type(&self) -> Type {
+    pub fn get_type(&self, left: &mut Exp, right: &mut Exp) -> Type {
         match *self {
-            Operator::Plus => Type::UnknownType,
+            Operator::Plus => type_conforms(&left.exp_type, &right.exp_type, &left.token),
             Operator::Minus |
             Operator::Multiply |
             Operator::Divide |
@@ -97,8 +97,8 @@ impl Operator {
             Operator::Equal |
             Operator::Not |
             Operator::And |
-            Operator::Or =>  Type::BoolType,
-            Operator::CollectionConcat => Type::UnknownType
+            Operator::Or => Type::BoolType,
+            Operator::CollectionConcat => type_conforms(&left.exp_type, &right.exp_type, &left.token)
         }
     }
 
@@ -109,7 +109,7 @@ impl Operator {
                     Value{value: Val::IntValue{value: v1 + v2}, val_type: Type::IntType}
                 },
                 (Val::CharValue{value: v1}, Val::CharValue{value: v2}) => {
-                    Value{value: Val::CharValue{value: v1 + &*v2 }, val_type: Type::CharType}
+                    Value{value: Val::StringValue{value: v1 + &*v2 }, val_type: Type::StringType}
                 },
                 (Val::StringValue{value: v1}, Val::StringValue{value: v2}) => {
                     Value{value: Val::StringValue{value: v1 + &*v2 }, val_type: Type::StringType}

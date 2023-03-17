@@ -363,13 +363,14 @@ impl Parser {
             let operator = self.curr().unwrap().clone().to_operator().unwrap();
             let temp_min = operator.get_precedence() + 1;
             self.advance();
-            let right = self.parse_utight_with_min(temp_min);
+            let mut right = self.parse_utight_with_min(temp_min);
+            let mut operator_type = operator.clone().get_type(&mut left, &mut right);
             left = Exp{
                 exp: Expression::Primitive{
                     operator,
                     left: Box::new(left),
                     right: Box::new(right)},
-                exp_type: UnknownType,
+                exp_type: operator_type,
                 token: token.clone()
             }
         }
@@ -396,7 +397,7 @@ impl Parser {
                         token: token.clone()
                     }),
                     right: Box::new(right)},
-                exp_type: UnknownType,
+                exp_type: BoolType,
                 token: token.clone()
             },
             Some(Operator::Minus) => Exp{
@@ -408,7 +409,7 @@ impl Parser {
                         token: token.clone()
                     }),
                     right: Box::new(right)},
-                exp_type: UnknownType,
+                exp_type: IntType,
                 token: token.clone()
             },
             _ => right
@@ -528,24 +529,21 @@ impl Parser {
     fn parse_literal(&mut self) -> Exp {
         let token = self.curr().unwrap();
         match self.curr() {
-            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::True)
-                => {
+            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::True) => {
                     Exp{
                         exp: Expression::Lit{lit: BoolLit{literal: true}},
                         exp_type: BoolType,
                         token: token.clone()
                     }
             },
-            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::False)
-                => {
+            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::False) => {
                     Exp{
                         exp: Expression::Lit{lit: BoolLit{literal: false}},
                         exp_type: BoolType,
                         token: token.clone()
                     }
             },
-            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Null)
-                => {
+            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Null) => {
                     Exp{
                         exp: Expression::Lit{lit: NullLit},
                         exp_type: NullType,
@@ -616,7 +614,11 @@ impl Parser {
             else_branch = Some(self.parse_simple_expression());
             self.match_required_delimiter(Delimiter::BraceRight);
         }
-        let exp_type = if else_branch == None { NullType } else { if_branch.exp_type.clone() };
+        let exp_type = if else_branch == None {
+            NullType
+        } else {
+            else_branch.clone().unwrap().exp_type
+        };
 
         Exp{
             exp: Expression::Branch{
@@ -631,6 +633,14 @@ impl Parser {
 
     fn parse_collection_def(&mut self) -> Exp {
         let token = self.curr().unwrap().clone();
+        if self.match_optional_delimiter(Delimiter::BracketRight) {
+            return Exp{
+                exp: Expression::ListDef{values: vec![]},
+                exp_type: ListType{list_type: Box::new(UnknownType)},
+                token
+            }
+        }
+
         let first_element = self.parse_simple_expression();
 
         if self.match_optional_delimiter(Delimiter::Comma) {
@@ -639,15 +649,21 @@ impl Parser {
                 elements.push(self.parse_simple_expression())
             }
             self.match_optional_delimiter(Delimiter::BracketRight);
+            let list_type = if elements.is_empty() {
+                UnknownType
+            } else {
+                elements.first().unwrap().clone().exp_type
+            };
             Exp{
                 exp: Expression::ListDef{values: elements},
-                exp_type: ListType{list_type: Box::new(UnknownType)},
+                exp_type: ListType{list_type: Box::new(list_type)},
                 token
             }
         } else if self.match_optional_delimiter(Delimiter::DenoteType) {
             let mut mapping: HashMap<Literal, Exp> = HashMap::new();
-            let first_key = self.get_exp_literal(first_element);
-            mapping.insert(first_key, self.parse_simple_expression());
+            let first_key = self.get_exp_literal(first_element.clone());
+            let first_value = self.parse_simple_expression();
+            mapping.insert(first_key, first_value.clone());
 
             while self.match_optional_delimiter(Delimiter::Comma) {
                 let key_exp = self.parse_simple_expression();
@@ -660,8 +676,8 @@ impl Parser {
             Exp{
                 exp: Expression::DictDef{mapping},
                 exp_type: DictType{
-                    key_type: Box::new(UnknownType),
-                    value_type: Box::new(UnknownType)
+                    key_type: Box::new(first_element.exp_type.clone()),
+                    value_type: Box::new(first_value.exp_type.clone())
                 },
                 token
             }

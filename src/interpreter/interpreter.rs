@@ -103,7 +103,7 @@ impl Interpreter {
     fn interpret_primitive(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
         match &exp.exp {
             Expression::Primitive{operator, left, right} => {
-                let op_type = operator.get_type();
+                let op_type = exp.exp_type.clone();
                 let left_value = self.interpret(left, env, &op_type);
                 let right_value = self.interpret(right, env, &op_type);
                 let result = operator.interpret(&left_value, &right_value);

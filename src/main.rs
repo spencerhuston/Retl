@@ -4,7 +4,7 @@ mod defs;
 mod utils;
 mod interpreter;
 
-use log::{debug, error};
+use log::{debug, error, trace};
 use env_logger::Env;
 use std::error::Error;
 use clap::Parser;
@@ -12,6 +12,7 @@ use std::path::PathBuf;
 use std::{fs, io};
 use std::collections::HashMap;
 use std::io::Write;
+use substring::Substring;
 
 use crate::scanner::scanner::Scanner;
 use crate::parser::parser::Parser as RetlParser;
@@ -95,14 +96,22 @@ fn run_retl_repl() -> Result<(), Box<dyn Error>> {
     let mut repl_input = String::new();
     println!("Retl REPL\n=========");
     loop {
+        trace!("REPL Input: {}", repl_input);
         let mut line = String::new();
         print!("> ");
         let _ = io::stdout().flush();
         io::stdin().read_line(&mut line).expect("Expected REPL input");
+        trace!("Line: {}", line);
         line = line.trim().to_string();
         if line == "quit" {
             break;
-        } else if line.ends_with('\\') || line.ends_with(';'){
+        } else if line.ends_with('\\') {
+            line = line.substring(0, line.len() - 1).to_string();
+            trace!("Trimmed line: {}", line);
+            repl_input.push_str(&*line);
+            repl_input.push_str("\n")
+        } else if line.ends_with(';') {
+            trace!("Trimmed line: {}", line);
             repl_input.push_str(&*line);
             repl_input.push_str("\n")
         } else {

@@ -25,16 +25,6 @@ impl Interpreter {
         }
     }
 
-    // TODO: For REPL
-    // fn run(&mut self, script: &String) -> Value {
-    //     let env = interpreter::value::Env::new();
-    //     let result = interpreter.interpret(
-    //         &make_ast(script)?,
-    //         &env,
-    //         &Type::UnknownType
-    //     );
-    // }
-
     pub fn interpret(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
         trace!("interpret: {:?}", exp);
         match &exp.exp {

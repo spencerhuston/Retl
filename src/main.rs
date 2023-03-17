@@ -9,8 +9,9 @@ use env_logger::Env;
 use std::error::Error;
 use clap::Parser;
 use std::path::PathBuf;
-use std::fs;
+use std::{fs, io};
 use std::collections::HashMap;
+use std::io::Write;
 
 use crate::scanner::scanner::Scanner;
 use crate::parser::parser::Parser as RetlParser;
@@ -89,9 +90,28 @@ fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_retl_repl() -> Result<(), Box<dyn Error>> {
-    // TODO
-    // Read line, if it ends with \, append to script string and newline
-    // Once no \, run with entire string
+    let interpreter = &mut Interpreter::init();
+    let mut env = interpreter::value::Env::new();
+    let mut repl_input = String::new();
+    println!("Retl REPL\n=========");
+    loop {
+        let mut line = String::new();
+        print!("> ");
+        let _ = io::stdout().flush();
+        io::stdin().read_line(&mut line).expect("Expected REPL input");
+        line = line.trim().to_string();
+        if line == "quit" {
+            break;
+        } else if line.ends_with('\\') || line.ends_with(';'){
+            repl_input.push_str(&*line);
+            repl_input.push_str("\n")
+        } else {
+            repl_input.push_str(&*line);
+            let result = interpreter.interpret(&make_ast(&repl_input)?, &mut env, &Type::UnknownType);
+            println!("{:?}", result);
+            repl_input.clear()
+        }
+    }
     Ok(())
 }
 

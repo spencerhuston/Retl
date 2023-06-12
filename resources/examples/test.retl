@@ -1,2 +1,3 @@
-let a = if (2 > 4 == false) { 'a' } else { 'b' };
-a
+let a: tuple[int, char] = (5, 'a');
+let b: char = a.1;
+b

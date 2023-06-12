@@ -484,7 +484,7 @@ impl Parser {
 
                 if self.match_optional_delimiter(Delimiter::TupleAccess) {
                     let token = self.curr().unwrap().clone();
-                    let access_index = self.parse_access_index();
+                    let access_index = self.parse_access_index() as usize;
                     let mut tuple_access = Exp{
                         exp: Expression::TupleAccess{
                             ident: Box::new(reference),
@@ -493,13 +493,6 @@ impl Parser {
                         exp_type: UnknownType,
                         token: token.clone()
                     };
-
-                    while self.match_optional_delimiter(Delimiter::TupleAccess) {
-                        tuple_access.exp = Expression::TupleAccess{
-                            ident: Box::new(tuple_access.clone()),
-                            index: self.parse_access_index()
-                        }
-                    }
                     tuple_access
                 } else {
                     reference
@@ -515,11 +508,10 @@ impl Parser {
                 }
             },
             Some(Token::Delimiter{..})
-                if self.match_optional_delimiter(Delimiter::ParenLeft)
-                    => {
-                let smp = self.parse_tuple_def_or_simple_expression();
-                self.match_required_delimiter(Delimiter::ParenRight);
-                smp
+                if self.match_optional_delimiter(Delimiter::ParenLeft) => {
+                    let smp = self.parse_tuple_def_or_simple_expression();
+                    self.match_required_delimiter(Delimiter::ParenRight);
+                    smp
             }
             Some(_) => self.parse_literal(),
             _ => self.make_empty_exp()

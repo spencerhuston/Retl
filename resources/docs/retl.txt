@@ -46,7 +46,7 @@ FEATURES:
 - range
 7. collection operators
 - list append operator: ++
-- list/dict access operator: ()
+- list/dict access operator: () (application)
 - tuple access operator: .
 8. REPL
 - args:

@@ -35,6 +35,7 @@ impl Interpreter {
             Expression::Branch{..} => self.interpret_branch(&exp, env, expected_type),
             Expression::ListDef{..} => self.interpret_list_def(&exp, env, expected_type),
             Expression::TupleDef{..} => self.interpret_tuple_def(&exp, env, expected_type),
+            Expression::TupleAccess{..} => self.interpret_tuple_access(&exp, env, expected_type),
             _ => {
                 // TODO: Throw error here, invalid expression
                 make_error_value()
@@ -141,11 +142,7 @@ impl Interpreter {
     fn interpret_branch(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
         trace!("interpret_branch: {:?}", exp);
         match &exp.exp {
-            Expression::Branch{
-                condition,
-                if_branch,
-                else_branch
-            } => {
+            Expression::Branch{condition, if_branch, else_branch } => {
                 match &**else_branch {
                     Some(else_exp) => type_conforms(&if_branch.exp_type, &else_exp.exp_type, &exp.token),
                     _ => type_conforms(&if_branch.exp_type, &Type::NullType, &exp.token)
@@ -179,15 +176,14 @@ impl Interpreter {
         trace!("interpret_list_def: {:?}", exp);
         match &exp.exp {
             Expression::ListDef{values} => {
-                let mut list_values: Vec<Value> = vec![];
                 let expected_list_type = type_conforms(&exp.exp_type, expected_type, &exp.token);
                 let list_type = match expected_list_type.clone() {
                     Type::ListType{list_type} => *list_type,
                     _ => Type::UnknownType
                 };
-                for v in values {
-                    list_values.push(self.interpret(v, env, &list_type))
-                }
+                let list_values: Vec<Value> = values.iter().map(|e: &Exp| {
+                    self.interpret(e, env, &list_type)
+                }).collect();
                 Value{value: Val::ListValue{values: list_values}, val_type: expected_list_type}
             },
             _ => {
@@ -201,19 +197,16 @@ impl Interpreter {
         trace!("interpret_tuple_def: {:?}", exp);
         match &exp.exp {
             Expression::TupleDef{values} => {
-                let mut tuple_values: Vec<Value> = vec![];
                 let expected_tuple_type = type_conforms(&exp.exp_type, expected_type, &exp.token);
                 let mut expected_tuple_types = match expected_tuple_type {
                     Type::TupleType{tuple_types} => tuple_types,
                     _ => vec![Type::UnknownType; values.len()]
                 };
-                for (v, t) in values.iter().zip(expected_tuple_types) {
-                    tuple_values.push(self.interpret(v, env, &t))
-                }
-                let mut tuple_types: Vec<Type> = vec![];
-                for t in tuple_values.clone() {
-                    tuple_types.push(t.val_type)
-                }
+                let tuple_values: Vec<Value> = values.iter().zip(expected_tuple_types)
+                    .map(|(e, t): (&Exp, Type)| { self.interpret(e, env, &t) })
+                    .collect();
+                let tuple_types: Vec<Type> = tuple_values.iter()
+                    .map(|tv: &Value| { tv.val_type.clone() }).collect();
                 Value{
                     value: Val::TupleValue{values: tuple_values},
                     val_type: Type::TupleType{tuple_types}
@@ -226,10 +219,30 @@ impl Interpreter {
         }
     }
 
-    // fn interpret_tuple_access(&mut self) -> Value {
-    //
-    // }
-    //
+    fn interpret_tuple_access(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_tuple_access: {:?}", exp);
+        match &exp.exp {
+            Expression::TupleAccess{ident, index} => {
+                let tuple_value = self.interpret(&**ident, env, &exp.exp_type);
+                match tuple_value.value {
+                    Val::TupleValue{values} => {
+                        let tuple_element = values[*index].clone();
+                        type_conforms(&tuple_element.val_type, expected_type, &exp.token);
+                        tuple_element
+                    },
+                    _ => {
+                        // TODO: Throw error here, not a tuple
+                        make_error_value()
+                    }
+                }
+            },
+            _ => {
+                // TODO: Throw error here, invalid expression
+                make_error_value()
+            }
+        }
+    }
+
     // fn interpret_dict_def(&mut self) -> Value {
     //
     // }

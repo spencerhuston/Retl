@@ -50,6 +50,7 @@ fn well_formed(t: &Type, token: &Token) -> Type {
         Type::UnknownType => {
             error!("Unknown type: {}",
                 get_fp_from_token(&token));
+            // TODO - Throw Exception here
             Type::UnknownType
         },
         _ => t.clone()
@@ -97,6 +98,7 @@ pub fn type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
                 t1.as_string(),
                 t2.as_string(),
                 get_fp_from_token(&token));
+            // TODO - Throw Exception here
             Type::UnknownType
         }
     }

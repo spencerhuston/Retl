@@ -56,7 +56,7 @@ pub enum Expression {
     Branch{condition: Box<Exp>, if_branch: Box<Exp>, else_branch: Box<Option<Exp>>},
     ListDef{values: Vec<Exp>},
     TupleDef{values: Vec<Exp>},
-    TupleAccess{ident: Box<Exp>, index: i32},
+    TupleAccess{ident: Box<Exp>, index: usize},
     DictDef{mapping: HashMap<Literal, Exp>},
     SchemaDef{mapping: HashMap<String, Type>},
     Empty

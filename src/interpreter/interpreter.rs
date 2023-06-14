@@ -5,7 +5,6 @@ use crate::defs::expression::{Exp, Expression, Literal, Parameter};
 use crate::defs::retl_type::type_conforms;
 use crate::defs::retl_type::Type;
 use crate::interpreter::value::{Value, Env, Val};
-use crate::interpreter::value::Val::FuncValue;
 use crate::scanner::token::{get_fp_from_token, make_empty_token, Token};
 
 pub struct Interpreter {
@@ -13,7 +12,7 @@ pub struct Interpreter {
     root_exp: Exp
 }
 
-pub fn make_error_value() -> Value {
+pub fn error() -> Value {
     Value{value: Val::Error, val_type: Type::UnknownType}
 }
 
@@ -36,6 +35,7 @@ impl Interpreter {
             Expression::Let{..} => self.interpret_let(&exp, env, expected_type),
             Expression::Lambda{..} => self.interpret_lambda(&exp, env, expected_type),
             Expression::Application{..} => self.interpret_application(&exp, env, expected_type),
+            Expression::Match{..} => self.interpret_match(&exp, env, expected_type),
             Expression::Primitive{..} => self.interpret_primitive(&exp, env, expected_type),
             Expression::Reference{..} => self.interpret_reference(&exp, env, expected_type),
             Expression::Branch{..} => self.interpret_branch(&exp, env, expected_type),
@@ -45,7 +45,7 @@ impl Interpreter {
             Expression::DictDef{..} => self.interpret_dict_def(&exp, env, expected_type),
             _ => {
                 // TODO: Throw error here, invalid expression
-                make_error_value()
+                error()
             }
         }
     }
@@ -68,7 +68,7 @@ impl Interpreter {
                         Value{value: Val::NullValue, val_type: Type::NullType}
                 }
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
@@ -83,7 +83,7 @@ impl Interpreter {
                     _ => Value{value: Val::NullValue, val_type: Type::NullType}
                 }
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
@@ -95,16 +95,13 @@ impl Interpreter {
         trace!("interpret_lambda: {:?}", exp);
         match &exp.exp {
             Expression::Lambda{params, return_type, body} => {
-                type_conforms(
-                    &Type::FuncType{
-                        param_types: params.iter().map(|p: &Parameter| {p.param_type.clone()}).collect(),
-                        return_type: Box::new(return_type.clone())
-                    },
-                    &expected_type,
-                    &exp.token
-                );
+                let func_type = Type::FuncType{
+                    param_types: params.iter().map(|p: &Parameter| {p.param_type.clone()}).collect(),
+                    return_type: Box::new(return_type.clone())
+                };
+                type_conforms(&func_type, &expected_type, &exp.token);
                 Value{
-                    value: FuncValue{
+                    value: Val::FuncValue{
                         builtin: false,
                         parameters: params.iter()
                             .map(|p: &Parameter| {(p.ident.clone(), p.param_type.clone())})
@@ -112,87 +109,105 @@ impl Interpreter {
                         body: *body.clone(),
                         env: env.clone()
                     },
-                    val_type: Type::IntType
+                    val_type: func_type
                 }
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
-    fn interpret_application(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+    fn interpret_application(&mut self, exp: &Exp, app_env: &mut Env, expected_type: &Type) -> Value {
         trace!("interpret_application: {:?}", exp);
         match &exp.exp {
             Expression::Application{ident, args} => {
-                let ident_value = self.interpret(ident, env, &Type::UnknownType); // TODO??
+                let ident_value = self.interpret(ident, app_env, &Type::UnknownType); // TODO??
                 match ident_value.value {
                     Val::ListValue{values} => {
                         if args.len() != 1 {
                             // TODO: Throw error here, argument size must be 1
-                            make_error_value()
+                            error()
                         } else {
                             match ident_value.val_type {
                                 Type::ListType{list_type} => {
                                     type_conforms(&list_type, expected_type, &exp.token);
-                                    let arg = self.interpret(args.get(0).unwrap(), env, &Type::IntType);
+                                    let arg = self.interpret(args.get(0).unwrap(), app_env, &Type::IntType);
                                     match arg.value {
                                         Val::IntValue{value} => {
                                             match values.get(value as usize) {
                                                 Some(value) => value.clone(),
                                                 _ => {
                                                     // TODO: Throw error here, invalid index
-                                                    make_error_value()
+                                                    error()
                                                 }
                                             }
                                         }
-                                        _ => {make_error_value()}
+                                        _ => {error()}
                                     }
                                 }
-                                _ => {make_error_value()}
+                                _ => {error()}
                             }
                         }
                     },
                     Val::DictValue{values} => {
                         if args.len() != 1 {
                             // TODO: Throw error here, argument size must be 1
-                            make_error_value()
+                            error()
                         } else {
                             match ident_value.val_type {
                                 Type::DictType{key_type, value_type} => {
                                     type_conforms(&*value_type, expected_type, &exp.token);
-                                    let arg = self.interpret(args.get(0).unwrap(), env, &*key_type);
+                                    let arg = self.interpret(args.get(0).unwrap(), app_env, &*key_type);
                                     match values.iter().find(|v| {v.0 == arg}) {
                                         Some(value) => value.clone().1,
                                         _ => {
                                             // TODO: Throw error here, key does not exist
-                                            make_error_value()
+                                            error()
                                         }
                                     }
                                 },
-                                _ => {make_error_value()}
+                                _ => {error()}
                             }
                         }
                     },
-                    // Val::FuncValue{builtin, parameters, body, env} => {
-                    //     // check args size matches param size
-                    //     // check arg types match param types
-                    //     // check return type matches expected type
-                    //     // if builtin, call builtin func
-                    //     // interpret params and add to env
-                    //     // interpret body and return result
-                    // },
+                    Val::FuncValue{builtin, parameters, body, env} => {
+                        if parameters.len() != args.len() {
+                            // TODO: Throw error here, arguments do not match function parameters
+                            error()
+                        } else {
+                            match ident_value.val_type {
+                                Type::FuncType{param_types, return_type} => {
+                                    type_conforms(&*return_type, expected_type, &exp.token);
+                                    let mut body_env = env.clone();
+                                    parameters.iter().zip(args)
+                                        .for_each(|pa| {
+                                            let arg_value = self.interpret(&pa.1.clone(), app_env, &pa.0.1);
+                                            body_env.insert(pa.0.0.clone(), arg_value);
+                                        });
+                                    self.interpret(&body, &mut body_env, &*return_type)
+                                },
+                                _ => {error()}
+                            }
+                        }
+                    },
                     _ => {
                         // TODO: Throw error here, application can not be done on exp type
-                        make_error_value()
+                        error()
                     }
                 }
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
-    // fn interpret_match(&mut self) -> Value {
-    //
-    // }
+    fn interpret_match(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_match: {:?}", exp);
+        match &exp.exp {
+            Expression::Match{match_exp, cases} => {
+                error()
+            },
+            _ => {error()}
+        }
+    }
 
     fn interpret_primitive(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
         trace!("interpret_primitive: {:?}", exp);
@@ -205,7 +220,7 @@ impl Interpreter {
                 type_conforms(&result.val_type, expected_type, &exp.token);
                 result
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
@@ -221,11 +236,11 @@ impl Interpreter {
                     },
                     _ => {
                         // TODO: Throw error here, reference does not exist
-                        make_error_value()
+                        error()
                     }
                 }
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
@@ -251,11 +266,11 @@ impl Interpreter {
                     },
                     _ => {
                         // TODO: Throw error here, not a valid condition
-                        make_error_value()
+                        error()
                     }
                 }
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
@@ -273,7 +288,7 @@ impl Interpreter {
                 }).collect();
                 Value{value: Val::ListValue{values: list_values}, val_type: expected_list_type}
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
@@ -296,7 +311,7 @@ impl Interpreter {
                     val_type: Type::TupleType{tuple_types}
                 }
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
@@ -313,11 +328,11 @@ impl Interpreter {
                     },
                     _ => {
                         // TODO: Throw error here, not a tuple
-                        make_error_value()
+                        error()
                     }
                 }
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 
@@ -347,7 +362,7 @@ impl Interpreter {
                     val_type: Type::DictType{key_type: Box::new(key_type), value_type: Box::new(value_type)}
                 }
             },
-            _ => {make_error_value()}
+            _ => {error()}
         }
     }
 

@@ -1,7 +1,9 @@
 TODO:
-- Add more typing in parsing phase
-- Update error reporting functions
-- use application on string to get character
+- Match-statement implementation
+- Schema definition implementation
+- Implement builtin functions
+- Fix error logging during interpreter phase
+- Finish type-aliasing implementation
 
 Interpreter w/ REPL:
 - Persistent env, pass by reference to each run
@@ -115,6 +117,7 @@ if
 else
 match
 case
+
 readln
 readCSV
 writeCSV

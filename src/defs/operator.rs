@@ -1,7 +1,7 @@
 use strum_macros::Display;
 use crate::{Exp, Type, Value};
 use crate::defs::retl_type::{concat_tuple_types, type_conforms};
-use crate::interpreter::interpreter::make_error_value;
+use crate::interpreter::interpreter::error;
 use crate::interpreter::value::Val;
 
 #[derive(Display, Debug, Eq, PartialEq, Clone)]
@@ -122,7 +122,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::Minus => match (left.value.clone(), right.value.clone()) {
@@ -131,7 +131,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::Multiply => match (left.value.clone(), right.value.clone()) {
@@ -140,7 +140,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::Divide => match (left.value.clone(), right.value.clone()) {
@@ -149,7 +149,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::Modulus => match (left.value.clone(), right.value.clone()) {
@@ -158,7 +158,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::GreaterThan => match (left.value.clone(), right.value.clone()) {
@@ -167,7 +167,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::LessThan => match (left.value.clone(), right.value.clone()) {
@@ -176,7 +176,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::GreaterThanEqualTo => match (left.value.clone(), right.value.clone()) {
@@ -185,7 +185,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::LessThanEqualTo => match (left.value.clone(), right.value.clone()) {
@@ -194,7 +194,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::Equal => match (left.value.clone(), right.value.clone()) {
@@ -237,7 +237,7 @@ impl Operator {
                 // },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::And => match (left.value.clone(), right.value.clone()) {
@@ -246,7 +246,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::Or => match (left.value.clone(), right.value.clone()) {
@@ -255,7 +255,7 @@ impl Operator {
                 },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
-                    make_error_value()
+                    error()
                 }
             },
             Operator::CollectionConcat => match (left.value.clone(), right.value.clone()) {
@@ -282,12 +282,12 @@ impl Operator {
                 // },
                 _ => {
                     // TODO: Throw error here, invalid operand
-                    make_error_value()
+                    error()
                 }
             },
             _ => {
                 // TODO: Throw error here, invalid operand
-                make_error_value()
+                error()
             }
         }
     }

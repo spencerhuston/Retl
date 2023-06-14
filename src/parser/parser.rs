@@ -15,8 +15,7 @@ pub struct Parser {
     pub root_exp: Exp,
     tokens: Vec<Token>,
     index: usize,
-    dummy_count: i32,
-    anon_count: i32
+    dummy_count: i32
 }
 
 fn get_token_as_string(token: Token) -> String {
@@ -38,7 +37,7 @@ fn get_return_type(exp: &Option<Exp>) -> Type {
 fn make_list_def_range(start: usize, end: usize, token: &Token) -> Vec<Exp> {
     let mut range: Vec<Exp> = vec![];
     let mut index = start;
-    while index < end {
+    while index < end + 1 {
         range.push(
             Exp{
                 exp: Expression::Lit{lit: IntLit{literal: index as i32}},
@@ -60,7 +59,7 @@ impl Parser {
                 exp_type: NullType,
                 token: make_empty_token()
             },
-            tokens: vec![], index: 0, dummy_count: 0, anon_count: 0
+            tokens: vec![], index: 0, dummy_count: 0
         }
     }
 
@@ -176,13 +175,6 @@ impl Parser {
         dummy_string += &self.dummy_count.to_string();
         self.dummy_count += 1;
         dummy_string
-    }
-
-    fn anon(&mut self) -> String {
-        let mut anon_string = String::from("anon$");
-        anon_string += &self.anon_count.to_string();
-        self.anon_count += 1;
-        anon_string
     }
 
     fn is_binary_op(&self, min: i32) -> bool {
@@ -364,7 +356,7 @@ impl Parser {
             let temp_min = operator.get_precedence() + 1;
             self.advance();
             let mut right = self.parse_utight_with_min(temp_min);
-            let mut operator_type = operator.clone().get_type(&mut left, &mut right);
+            let operator_type = operator.clone().get_type(&mut left, &mut right);
             left = Exp{
                 exp: Expression::Primitive{
                     operator,
@@ -485,7 +477,7 @@ impl Parser {
                 if self.match_optional_delimiter(Delimiter::TupleAccess) {
                     let token = self.curr().unwrap().clone();
                     let access_index = self.parse_access_index() as usize;
-                    let mut tuple_access = Exp{
+                    let tuple_access = Exp{
                         exp: Expression::TupleAccess{
                             ident: Box::new(reference),
                             index: access_index
@@ -752,7 +744,7 @@ impl Parser {
                 let lit_pattern = self.parse_literal();
                 match lit_pattern.exp.clone() {
                     list@Expression::ListDef{..} => Pattern::Range{range: list},
-                    Expression::Lit{lit} => { // Literal
+                    Expression::Lit{lit} => {
                         if self.match_optional_delimiter(Delimiter::LambdaSig) {
                             let mut literals: Vec<Literal> = vec![
                                 self.get_exp_literal(lit_pattern),

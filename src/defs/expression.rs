@@ -49,7 +49,7 @@ pub enum Expression {
     Let{ident: String, let_type: Type, let_exp: Box<Exp>, after_let_exp: Box<Option<Exp>>},
     Alias{ident: String, alias: Type, after_alias_exp: Box<Option<Exp>>}, // TODO Interpreter
     Lambda{params: Vec<Parameter>, return_type: Type, body: Box<Exp>},
-    Application{ident: Box<Exp>, args: Vec<Exp>}, // TODO Interpreter
+    Application{ident: Box<Exp>, args: Vec<Exp>},
     Match{match_exp: Box<Exp>, cases: Vec<Case>}, // TODO Interpreter
     Primitive{operator: Operator, left: Box<Exp>, right: Box<Exp>},
     Reference{ident: String},
@@ -58,6 +58,6 @@ pub enum Expression {
     TupleDef{values: Vec<Exp>},
     TupleAccess{ident: Box<Exp>, index: usize},
     DictDef{mapping: HashMap<Literal, Exp>},
-    SchemaDef{mapping: HashMap<String, Type>}, // TODO Interpreter
+    SchemaDef{mapping: HashMap<String, Type>}, // TODO: Need built-ins first
     Empty
 }

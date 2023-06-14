@@ -1,11 +1,10 @@
-use std::collections::HashMap;
-use log::{debug, trace, error};
+use log::{trace};
 
-use crate::defs::expression::{Exp, Expression, Literal, Parameter};
-use crate::defs::retl_type::type_conforms;
+use crate::defs::expression::{Exp, Expression, Literal, Parameter, Pattern};
+use crate::defs::retl_type::{type_conforms, type_conforms_no_error};
 use crate::defs::retl_type::Type;
 use crate::interpreter::value::{Value, Env, Val};
-use crate::scanner::token::{get_fp_from_token, make_empty_token, Token};
+use crate::scanner::token::make_empty_token;
 
 pub struct Interpreter {
     pub error: bool,
@@ -175,7 +174,7 @@ impl Interpreter {
                             error()
                         } else {
                             match ident_value.val_type {
-                                Type::FuncType{param_types, return_type} => {
+                                Type::FuncType{return_type, ..} => {
                                     type_conforms(&*return_type, expected_type, &exp.token);
                                     let mut body_env = env.clone();
                                     parameters.iter().zip(args)
@@ -203,7 +202,70 @@ impl Interpreter {
         trace!("interpret_match: {:?}", exp);
         match &exp.exp {
             Expression::Match{match_exp, cases} => {
-                error()
+                let match_val = self.interpret(match_exp, env, &Type::UnknownType);
+                match cases.iter().find(|case| {
+                    match case.pattern.clone() {
+                        Pattern::TypePattern{ident, case_type, predicate} => {
+                            match type_conforms_no_error(&match_val.val_type.clone(), &case_type, &case.case_exp.token) {
+                                Type::UnknownType => false,
+                                _ => {
+                                    env.insert(ident, match_val.clone());
+                                    match predicate {
+                                        Some(pred) => {
+                                            match self.interpret(&pred, env, &Type::BoolType).value {
+                                                Val::BoolValue{value} => value,
+                                                _ => false
+                                            }
+                                        },
+                                        _ => true
+                                    }
+                                }
+                            }
+                        },
+                        Pattern::Literal{literal} => {
+                            match (match_val.value.clone(), literal) {
+                                (Val::IntValue{value}, Literal::IntLit{literal}) => value == literal,
+                                (Val::BoolValue{value}, Literal::BoolLit{literal}) => value == literal,
+                                (Val::CharValue{value}, Literal::CharLit{literal}) => value == literal,
+                                (Val::StringValue{value}, Literal::StringLit{literal}) => value == literal,
+                                (Val::NullValue, Literal::NullLit) => true,
+                                _ => false
+                            }
+                        },
+                        Pattern::MultiLiteral{literals} => {
+                            literals.iter().any(|lit: &Literal| {
+                                match (match_val.value.clone(), lit) {
+                                    (Val::IntValue{value}, Literal::IntLit{literal}) => value == *literal,
+                                    (Val::BoolValue{value}, Literal::BoolLit{literal}) => value == *literal,
+                                    (Val::CharValue{value}, Literal::CharLit{literal}) => value == *literal,
+                                    (Val::StringValue{value}, Literal::StringLit{literal}) => value == *literal,
+                                    (Val::NullValue, Literal::NullLit) => true,
+                                    _ => false
+                                }
+                            })
+                        },
+                        Pattern::Range{range} => {
+                            match range {
+                                Expression::ListDef{values} => {
+                                    values.iter().any(|value: &Exp| {
+                                        match (match_val.value.clone(), value.exp.clone()) {
+                                            (Val::IntValue{value}, Expression::Lit{lit: Literal::IntLit{literal}}) => value == literal,
+                                            _ => false
+                                        }
+                                    })
+                                },
+                                _ => false
+                            }
+                        },
+                        Pattern::Any => true
+                    }
+                }) {
+                    Some(value) => self.interpret(&value.case_exp, env, expected_type),
+                    _ => {
+                        // TODO: Throw error here, no matching cases
+                        error()
+                    }
+                }
             },
             _ => {error()}
         }
@@ -213,9 +275,8 @@ impl Interpreter {
         trace!("interpret_primitive: {:?}", exp);
         match &exp.exp {
             Expression::Primitive{operator, left, right} => {
-                let op_type = exp.exp_type.clone();
-                let left_value = self.interpret(left, env, &op_type);
-                let right_value = self.interpret(right, env, &op_type);
+                let left_value = self.interpret(left, env, &Type::UnknownType);
+                let right_value = self.interpret(right, env, &Type::UnknownType);
                 let result = operator.interpret(&left_value, &right_value);
                 type_conforms(&result.val_type, expected_type, &exp.token);
                 result
@@ -297,7 +358,7 @@ impl Interpreter {
         match &exp.exp {
             Expression::TupleDef{values} => {
                 let expected_tuple_type = type_conforms(&exp.exp_type, expected_type, &exp.token);
-                let mut expected_tuple_types = match expected_tuple_type {
+                let expected_tuple_types = match expected_tuple_type {
                     Type::TupleType{tuple_types} => tuple_types,
                     _ => vec![Type::UnknownType; values.len()]
                 };

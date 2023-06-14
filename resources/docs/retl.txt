@@ -1,7 +1,7 @@
 TODO:
-- Match-statement implementation
 - Schema definition implementation
 - Implement builtin functions
+- Ending type-info
 - Fix error logging during interpreter phase
 - Finish type-aliasing implementation
 

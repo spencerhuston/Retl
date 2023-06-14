@@ -4,13 +4,11 @@ mod defs;
 mod utils;
 mod interpreter;
 
-use log::{debug, error, trace};
-use env_logger::Env;
+use log::{error, trace};
 use std::error::Error;
 use clap::Parser;
 use std::path::PathBuf;
 use std::{fs, io};
-use std::collections::HashMap;
 use std::io::Write;
 use substring::Substring;
 

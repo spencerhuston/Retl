@@ -232,9 +232,6 @@ impl Operator {
                         val_type: Type::BoolType
                     }
                 },
-                // (Val::DictValue{values: v1}, Val::DictValue{values: v2}) => {
-                //
-                // },
                 _ => {
                     // TODO: Throw error here, invalid types for operand
                     error()

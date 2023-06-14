@@ -1,9 +1,4 @@
-let app = |d: dict[string: list[list[int]]]| -> string -> int -> list[int] {
-    |key: string| -> int -> list[int] {
-        |index: int| -> list[int] { d(key)(index) }
-    }
-};
-let d = ["hello": [[0, 1], [1, 2]],
-         "world": [[2, 3], [3, 4]],
-         "test": [[4, 5], [5, 6]];
-app(d)("world")(1)(0)
+match 5 {
+    case x: int if x == 5 => "hello",
+    case _ => true
+}

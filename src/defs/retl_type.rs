@@ -1,7 +1,6 @@
 use log::{error, trace};
 use strum_macros::Display;
 use crate::scanner::token::{Token, get_fp_from_token};
-use crate::utils::file_position::FilePosition;
 use crate::Value;
 
 #[derive(Display, Debug, Clone, PartialEq, Eq, Hash)]
@@ -16,7 +15,8 @@ pub enum Type {
     DictType{key_type: Box<Type>, value_type: Box<Type>},
     SchemaType,
     FuncType{param_types: Vec<Type>, return_type: Box<Type>},
-    UnknownType
+    UnknownType,
+    Any
 }
 
 fn well_formed(t: &Type, token: &Token) -> Type {
@@ -57,7 +57,7 @@ fn well_formed(t: &Type, token: &Token) -> Type {
     }
 }
 
-pub fn type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
+fn _type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
     trace!("t1: {:?}, t2: {:?}, token: {:?}", t1, t2, token);
     match (t1, t2) {
         (_, _) if t1 == t2 => well_formed(t1, token),
@@ -93,14 +93,30 @@ pub fn type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
         },
         (_, Type::UnknownType) => well_formed(t1, token),
         (Type::UnknownType, _) => well_formed(t2, token),
-        _ => {
+        (Type::Any, _) => Type::Any,
+        (_, Type::Any) => Type::Any,
+        _ => Type::UnknownType
+    }
+}
+
+pub fn type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
+    match _type_conforms(t1, t2, token) {
+        ut@Type::UnknownType => {
             error!("Type mismatch, {:?} vs. {:?}: {}",
-                t1.as_string(),
-                t2.as_string(),
-                get_fp_from_token(&token));
-            // TODO - Throw Exception here
-            Type::UnknownType
-        }
+            t1.as_string(),
+            t2.as_string(),
+            get_fp_from_token(&token));
+            // TODO - Throw panic here
+            ut
+        },
+        t@_ => t
+    }
+}
+
+pub fn type_conforms_no_error(t1: &Type, t2: &Type, token: &Token) -> Type {
+    match _type_conforms(t1, t2, token) {
+        ut@Type::UnknownType => ut,
+        t@_ => t
     }
 }
 
@@ -141,7 +157,7 @@ impl Type {
                 "tuple[".to_owned() + &*type_list_as_string(&tuple_types) + "]"
             },
             Type::DictType{key_type, value_type} => {
-                "dict[".to_owned() + &key_type.clone().as_string() + &value_type.clone().as_string() + "]"
+                "dict[".to_owned() + &key_type.clone().as_string() + ": " + &value_type.clone().as_string() + "]"
             },
             Type::SchemaType => String::from("schema"),
             Type::FuncType{param_types, return_type} => {
@@ -149,6 +165,7 @@ impl Type {
                     "->" + &return_type.clone().as_string() + "]"
             },
             Type::UnknownType => String::from("unknown"),
+            Type::Any => String::from("any")
         }
     }
 }

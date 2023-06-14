@@ -60,6 +60,7 @@ fn make_ast(script: &String) -> Result<Exp, Box<dyn Error>> {
     scanner.scan(&script);
 
     if scanner.error {
+        trace!("SCANNER ERROR");
         return Err("One more errors occurred, exiting.".into())
     }
 
@@ -67,6 +68,7 @@ fn make_ast(script: &String) -> Result<Exp, Box<dyn Error>> {
     parser.parse(&scanner.tokens);
 
     if parser.error {
+        trace!("PARSER ERROR");
         Err("One more errors occurred, exiting.".into())
     } else {
         Ok(parser.root_exp.clone())
@@ -83,6 +85,7 @@ fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
     );
 
     if interpreter.error {
+        trace!("INTERPRETER ERROR");
         Err("One more errors occurred, exiting.".into())
     } else {
         println!("{:?}", result);

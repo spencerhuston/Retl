@@ -21,11 +21,11 @@ pub enum Val {
     NullValue,
     ListValue{values: Vec<Value>},
     TupleValue{values: Vec<Value>},
-    DictValue{values: (Box<Value>, Box<Value>)},
+    DictValue{values: Vec<(Value, Value)>},
     SchemaValue{values: HashMap<String, Type>},
     FuncValue{
         builtin: bool,
-        parameters: Vec<String>,
+        parameters: Vec<(String, Type)>,
         body: Exp,
         env: Env
     },

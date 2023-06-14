@@ -383,7 +383,7 @@ impl Parser {
         if self.match_optional_keyword(Keyword::Not) {
             operator = Some(self.curr().unwrap().to_operator().unwrap())
         } else if self.match_optional_delimiter(Delimiter::Minus) {
-            operator = Some(self.curr().unwrap().to_operator().unwrap())
+            operator = Some(self.curr().unwrap().to_operator().unwrap()) // TODO: Fix
         }
 
         let right = self.parse_tight();
@@ -826,10 +826,8 @@ impl Parser {
     fn parse_parameter(&mut self) -> Parameter {
         let token = self.curr().unwrap().clone();
         let ident = self.match_ident();
-        let mut param_type = UnknownType;
-        if self.match_optional_delimiter(Delimiter::DenoteType) {
-            param_type = self.parse_type();
-        }
+        self.match_required_delimiter(Delimiter::DenoteType);
+        let param_type = self.parse_type();
         Parameter{ident, param_type, token}
     }
     
@@ -858,7 +856,7 @@ impl Parser {
             return_type: Box::new(return_type.clone())
         };
 
-        let lambda = Exp{
+        Exp{
             exp: Expression::Lambda{
                 params,
                 return_type: return_type.clone(),
@@ -866,26 +864,26 @@ impl Parser {
             },
             exp_type: func_type.clone(),
             token: token.clone()
-        };
-        let ident = self.anon();
-        let let_type = func_type.clone();
-        let let_exp = lambda;
-        let after_let_exp = Exp{
-            exp: Expression::Reference{ident: ident.clone()},
-            exp_type: func_type.clone(),
-            token: token.clone()
-        };
-
-        Exp{
-            exp: Expression::Let{
-                ident,
-                let_type,
-                let_exp: Box::new(let_exp),
-                after_let_exp: Box::new(Some(after_let_exp))
-            },
-            exp_type: func_type,
-            token
         }
+        // let ident = self.anon();
+        // let let_type = func_type.clone();
+        // let let_exp = lambda;
+        // let after_let_exp = Exp{
+        //     exp: Expression::Reference{ident: ident.clone()},
+        //     exp_type: func_type.clone(),
+        //     token: token.clone()
+        // };
+        //
+        // Exp{
+        //     exp: Expression::Let{
+        //         ident,
+        //         let_type,
+        //         let_exp: Box::new(let_exp),
+        //         after_let_exp: Box::new(Some(after_let_exp))
+        //     },
+        //     exp_type: func_type,
+        //     token
+        // }
     }
 
     fn parse_arguments(&mut self) -> Vec<Exp> {

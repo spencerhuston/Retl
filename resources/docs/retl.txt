@@ -1,9 +1,7 @@
 TODO:
-- Implement builtin functions
-- Fix list concat
-- Fix minus sign
-- Ending type-info
 - Fix error logging during interpreter phase
+- Implement builtin functions
+- Ending type-info
 - Finish type-aliasing implementation
 
 

@@ -54,8 +54,7 @@ impl Operator {
             Operator::LessThan | 
             Operator::GreaterThanEqualTo | 
             Operator::LessThanEqualTo | 
-            Operator::Equal | 
-            Operator::Not | 
+            Operator::Equal |
             Operator::And | 
             Operator::Or => true,
             _ => false
@@ -257,17 +256,11 @@ impl Operator {
             },
             Operator::CollectionConcat => match (left.value.clone(), right.value.clone()) {
                 (Val::ListValue{values: v1}, Val::ListValue{values: v2}) => {
-                    v1.clone().append(&mut v2.clone());
+                    let mut concat_list = v1.clone();
+                    concat_list.append(&mut v2.clone());
                     Value{
-                        value: Val::ListValue{values: v1},
+                        value: Val::ListValue{values: concat_list},
                         val_type: left.val_type.clone()
-                    }
-                },
-                (Val::TupleValue{values: tt1}, Val::TupleValue{values: tt2}) => {
-                    tt1.clone().append(&mut tt2.clone());
-                    Value{
-                        value: Val::TupleValue{values: tt1},
-                        val_type: Type::TupleType{tuple_types: concat_tuple_types(&left, &right)}
                     }
                 },
                 // (Val::DictValue{values: v1}, Val::DictValue{values: v2}) => { TODO

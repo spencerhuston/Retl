@@ -120,7 +120,7 @@ impl Interpreter {
         trace!("interpret_application: {:?}", exp);
         match &exp.exp {
             Expression::Application{ident, args} => {
-                let ident_value = self.interpret(ident, app_env, &Type::UnknownType); // TODO??
+                let ident_value = self.interpret(ident, app_env, &Type::UnknownType);
                 match ident_value.value {
                     Val::ListValue{values} => {
                         if args.len() != 1 {

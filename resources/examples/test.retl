@@ -1,5 +1,6 @@
-let s: schema = ${
-    a: int,
-    b: bool
-};
-s
+let i = -1;
+if (not {i > 0}) {
+    'a'
+} else {
+    'b'
+}

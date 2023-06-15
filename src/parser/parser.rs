@@ -303,8 +303,24 @@ impl Parser {
                 if self.match_optional_keyword(Keyword::If)
                     => self.parse_branch(),
             Some(Token::Delimiter{..})
-                if self.match_optional_delimiter(Delimiter::BracketLeft)
-                    => self.parse_collection_def(),
+                if self.match_optional_delimiter(Delimiter::BracketLeft) => {
+                let first_collection = self.parse_collection_def();
+                if self.match_optional_delimiter(Delimiter::ListConcat) {
+                    self.match_required_delimiter(Delimiter::BracketLeft);
+                    let second_collection = self.parse_collection_def();
+                    Exp{
+                        exp: Expression::Primitive{
+                            operator: Operator::CollectionConcat,
+                            left: Box::new(first_collection),
+                            right: Box::new(second_collection)
+                        },
+                        exp_type: IntType,
+                        token: self.curr().unwrap().clone()
+                    }
+                } else {
+                    first_collection
+                }
+            },
             Some(Token::Delimiter{..})
                 if self.match_optional_delimiter(Delimiter::ParenLeft)
                     => self.parse_tuple_def_or_simple_expression(),
@@ -373,9 +389,9 @@ impl Parser {
         let token = self.curr().unwrap();
         let mut operator: Option<Operator> = None;
         if self.match_optional_keyword(Keyword::Not) {
-            operator = Some(self.curr().unwrap().to_operator().unwrap())
+            operator = Some(Operator::Not)
         } else if self.match_optional_delimiter(Delimiter::Minus) {
-            operator = Some(self.curr().unwrap().to_operator().unwrap()) // TODO: Fix
+            operator = Some(Operator::Minus)
         }
 
         let right = self.parse_tight();

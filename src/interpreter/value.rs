@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use strum_macros::Display;
 
 use crate::defs::expression::Exp;
+use crate::defs::keyword::Keyword;
 use crate::defs::retl_type::Type;
 
 pub type Env = HashMap<String, Value>;
@@ -24,7 +25,7 @@ pub enum Val {
     DictValue{values: Vec<(Value, Value)>},
     SchemaValue{values: HashMap<String, Type>},
     FuncValue{
-        builtin: bool,
+        builtin_ident: Option<Keyword>,
         parameters: Vec<(String, Type)>,
         body: Exp,
         env: Env

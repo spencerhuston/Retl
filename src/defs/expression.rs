@@ -47,7 +47,7 @@ pub struct Case {
 pub enum Expression {
     Lit{lit: Literal},
     Let{ident: String, let_type: Type, let_exp: Box<Exp>, after_let_exp: Box<Option<Exp>>},
-    Alias{ident: String, alias: Type, after_alias_exp: Box<Option<Exp>>}, // TODO Interpreter
+    Alias{ident: String, alias: Type, after_alias_exp: Box<Option<Exp>>},
     Lambda{params: Vec<Parameter>, return_type: Type, body: Box<Exp>},
     Application{ident: Box<Exp>, args: Vec<Exp>},
     Match{match_exp: Box<Exp>, cases: Vec<Case>},

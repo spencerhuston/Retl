@@ -897,12 +897,18 @@ impl Parser {
     }
 
     fn parse_arguments(&mut self) -> Vec<Exp> {
-        let mut args: Vec<Exp> = vec![self.parse_simple_expression()];
-        while self.match_optional_delimiter(Delimiter::Comma) ||
-            !self.match_optional_delimiter(Delimiter::ParenRight) {
-            args.push(self.parse_simple_expression())
+        let mut args: Vec<Exp> = vec![];
+
+        if self.match_optional_delimiter(Delimiter::ParenRight) {
+            args
+        } else {
+            args.push(self.parse_simple_expression());
+            while self.match_optional_delimiter(Delimiter::Comma) ||
+                !self.match_optional_delimiter(Delimiter::ParenRight) {
+                args.push(self.parse_simple_expression())
+            }
+            args
         }
-        args
     }
 
     fn parse_application(&mut self) -> Exp {

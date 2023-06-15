@@ -1,2 +1,2 @@
-let l = "test";
-l(1)
+let a: string = readln();
+println(a)

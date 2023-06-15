@@ -1,4 +1,7 @@
+use std::borrow::Borrow;
 use log::{error, trace};
+use regex::internal::Input;
+use crate::Builtin;
 
 use crate::defs::expression::{Exp, Expression, Literal, Parameter, Pattern};
 use crate::defs::retl_type::{type_conforms, type_conforms_no_error};
@@ -8,7 +11,8 @@ use crate::scanner::token::{get_fp_from_token, make_empty_token};
 
 pub struct Interpreter {
     pub error: bool,
-    root_exp: Exp
+    root_exp: Exp,
+    builtin: Builtin
 }
 
 pub fn error() -> Value {
@@ -16,14 +20,15 @@ pub fn error() -> Value {
 }
 
 impl Interpreter {
-    pub fn init() -> Interpreter {
+    pub fn init(builtin: &Builtin) -> Interpreter {
         Interpreter{
             error: false,
             root_exp: Exp{
                 exp: Expression::Empty,
                 exp_type: Type::NullType,
                 token: make_empty_token()
-            }
+            },
+            builtin: builtin.clone()
         }
     }
 
@@ -112,7 +117,7 @@ impl Interpreter {
                 type_conforms(&func_type, &expected_type, &exp.token);
                 Value{
                     value: Val::FuncValue{
-                        builtin: false,
+                        builtin_ident: None,
                         parameters: params.iter()
                             .map(|p: &Parameter| {(p.ident.clone(), p.param_type.clone())})
                             .collect(),
@@ -204,7 +209,7 @@ impl Interpreter {
                             }
                         }
                     },
-                    Val::FuncValue{builtin, parameters, body, env} => {
+                    Val::FuncValue{builtin_ident, parameters, body, env} => {
                         if parameters.len() != args.len() {
                             // TODO: Throw error here, arguments do not match function parameters
                             error()
@@ -218,7 +223,10 @@ impl Interpreter {
                                             let arg_value = self.interpret(&pa.1.clone(), app_env, &pa.0.1);
                                             body_env.insert(pa.0.0.clone(), arg_value);
                                         });
-                                    self.interpret(&body, &mut body_env, &*return_type)
+                                    match builtin_ident {
+                                        Some(ident) => self.builtin.interpret(ident.clone(), &mut body_env),
+                                        _ => self.interpret(&body, &mut body_env, &*return_type)
+                                    }
                                 },
                                 _ => error()
                             }

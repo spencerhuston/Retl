@@ -3,6 +3,7 @@ mod parser;
 mod defs;
 mod utils;
 mod interpreter;
+mod builtin;
 
 use log::{error, trace};
 use std::error::Error;
@@ -11,6 +12,7 @@ use std::path::PathBuf;
 use std::{fs, io};
 use std::io::Write;
 use substring::Substring;
+use crate::builtin::builtin::Builtin;
 
 use crate::scanner::scanner::Scanner;
 use crate::parser::parser::Parser as RetlParser;
@@ -74,8 +76,9 @@ fn make_ast(script: &String) -> Result<Exp, Box<dyn Error>> {
 }
 
 fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
-    let interpreter = &mut Interpreter::init();
-    let mut env = interpreter::value::Env::new();
+    let mut builtin = Builtin::init();
+    let mut env = builtin.load_builtins(&interpreter::value::Env::new());
+    let interpreter = &mut Interpreter::init(&builtin);
     let result = interpreter.interpret(
         &make_ast(script)?,
         &mut env,
@@ -92,8 +95,9 @@ fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_retl_repl() -> Result<(), Box<dyn Error>> {
-    let interpreter = &mut Interpreter::init();
-    let mut env = interpreter::value::Env::new();
+    let mut builtin = Builtin::init();
+    let mut env = builtin.load_builtins(&interpreter::value::Env::new());
+    let interpreter = &mut Interpreter::init(&builtin);
     let mut repl_input = String::new();
     println!("Retl REPL\n=========");
     loop {

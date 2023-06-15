@@ -1,6 +1,6 @@
 TODO:
-- Fix error logging during interpreter phase
 - Implement builtin functions
+- Fix error logging during interpreter phase
 - Ending type-info
 - Clean up TODO's
 
@@ -11,6 +11,7 @@ Possible features?
 - lazy evaluation
 - string interpolation
 - as keyword
+- List slicing
 
 
 FEATURES:
@@ -20,6 +21,8 @@ FEATURES:
 - type inference (DONE)
 - type-aliasing (DONE)
 - range operator .. (DONE)
+- string indexing (DONE)
+- list slicing: l[x..y] (TODO)
 4. basic pattern matching (DONE)
 - match by type: {name}: {type}
 - multi-choice: |
@@ -37,7 +40,7 @@ FEATURES:
 - foldl (TODO)
 - foldr (TODO)
 - foreach (TODO)
-- range (TODO)
+- len (TODO)
 7. collection operators
 - list append operator: ++ (DONE)
 - list/dict access operator: () (application) (DONE)
@@ -107,7 +110,7 @@ else
 match
 case
 
-readln
+Readln
 readCSV
 writeCSV
 print

@@ -1,6 +1,4 @@
-let i = -1;
-if (not (i < 0)) {
-    'a'
-} else {
-    'b'
-}
+let l = [3, 4];
+let l2 = [1, 2] ++ l;
+let l3 = l ++ l2;
+l3(4)

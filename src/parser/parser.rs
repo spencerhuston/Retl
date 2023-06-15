@@ -306,8 +306,7 @@ impl Parser {
                 if self.match_optional_delimiter(Delimiter::BracketLeft) => {
                 let first_collection = self.parse_collection_def();
                 if self.match_optional_delimiter(Delimiter::ListConcat) {
-                    self.match_required_delimiter(Delimiter::BracketLeft);
-                    let second_collection = self.parse_collection_def();
+                    let second_collection = self.parse_tight();
                     Exp{
                         exp: Expression::Primitive{
                             operator: Operator::CollectionConcat,
@@ -426,6 +425,11 @@ impl Parser {
 
     fn parse_tight(&mut self) -> Exp {
         match self.curr() {
+            Some(Token::Delimiter{..})
+                if self.match_optional_delimiter(Delimiter::BracketLeft)
+                    => {
+                self.parse_collection_def()
+            },
             Some(Token::Delimiter{..})
                 if self.match_optional_delimiter(Delimiter::BraceLeft)
                     => {

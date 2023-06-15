@@ -3,6 +3,7 @@ TODO:
 - Implement builtin functions
 - Ending type-info
 - Finish type-aliasing implementation
+- Clean up TODO's
 
 
 Possible features?

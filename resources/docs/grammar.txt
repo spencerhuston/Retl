@@ -27,7 +27,10 @@
 <pattern> ::= <ident>':'<type> ['if' <smp>] | <literal>['|'<literal>]* | <range> | '_'
 <match> ::= 'match' <atom> '{' 'case' <pattern> '=>' <smp>[',''case' <pattern> '=>' <smp>]*'}'
 
+<collection> ::= '['[<smp>[':'<smp>][','<smp>[':'<smp>]]*]']'
+
 <tight> ::= <app>['|>'<app>]
+    | <collection>
     | '('<smp>')'
     | '{'<exp>'}'
 
@@ -39,11 +42,9 @@
 
 <alias> ::= 'alias' <ident> '=' <type>
 
-<collection> ::= '['[<smp>[':'<smp>][','<smp>[':'<smp>]]*]']'
-
 <smp> ::= <utight>[<op><utight>]
     | 'if' '('<smp>')' '{' <smp> '}' ['else' '{' <smp> '}']
-    | <collection>['++' <collection>]
+    | <collection>['++' <tight>]
     | '('<smp>[','<smp>]')'
     | '$''{'<ident>':'<type>[','<ident>':'<type>]*'}'
     | <match>

@@ -1,19 +1,14 @@
 use std::collections::HashMap;
 use std::io;
 use std::io::Write;
-use std::ptr::null;
 use std::str::FromStr;
-use clap::builder::Str;
-use log::{error, trace};
-use strum_macros::{EnumString, Display};
 
-use crate::defs::expression::{Exp, Expression, Literal, Parameter, Pattern};
+use crate::defs::expression::{Exp, Expression};
 use crate::defs::keyword::Keyword;
-use crate::defs::retl_type::{type_conforms, type_conforms_no_error};
 use crate::Type;
 use crate::defs::retl_type::Type::*;
 use crate::interpreter::value::{Value, Env, Val};
-use crate::scanner::token::{get_fp_from_token, make_empty_token};
+use crate::scanner::token::make_empty_token;
 
 fn null_val() -> Value {
     Value{value: Val::NullValue, val_type: NullType}
@@ -81,13 +76,13 @@ impl Builtin {
                 Value{value: Val::StringValue{value: line}, val_type: rt}
             },
             Keyword::Println => {
-                print!("{}", match &args[0].value {
-                    Val::StringValue{value} => value.clone(),
-                    _ => "".to_string()
+                println!("{}", match &args[0].value { // TODO: FIX OUTPUT
+                    Val::StringValue{value} => value.as_str(),
+                    _ => ""
                 });
                 let _ = io::stdout().flush();
                 null_val()
-            }
+            },
             _ => Value{value: Val::Error, val_type: UnknownType}
         }
     }

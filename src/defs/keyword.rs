@@ -35,12 +35,12 @@ pub enum Keyword {
     Or,
     #[strum(serialize = "not")]
     Not,
-    #[strum(serialize = "parallel")]
-    Parallel,
     #[strum(serialize = "if")]
     If,
     #[strum(serialize = "else")]
     Else,
+    #[strum(serialize = "iter")]
+    Iter,
     #[strum(serialize = "match")]
     Match,
     #[strum(serialize = "case")]

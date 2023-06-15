@@ -1,7 +1,9 @@
 TODO:
+- Iteration
 - Implement builtin functions
 - Fix error logging during interpreter phase
 - Ending type-info
+- Fix not logic so parentheses not required
 - Clean up TODO's
 
 
@@ -55,6 +57,7 @@ FEATURES:
     3. run new code
     4. add to env
 10. strong, dynamic typing (DONE)
+11. Iteration
 
 Structure:
 ReplRunner

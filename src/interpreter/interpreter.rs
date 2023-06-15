@@ -1,33 +1,31 @@
-use std::borrow::Borrow;
 use log::{error, trace};
-use regex::internal::Input;
 use crate::Builtin;
 
 use crate::defs::expression::{Exp, Expression, Literal, Parameter, Pattern};
 use crate::defs::retl_type::{type_conforms, type_conforms_no_error};
 use crate::defs::retl_type::Type;
 use crate::interpreter::value::{Value, Env, Val};
-use crate::scanner::token::{get_fp_from_token, make_empty_token};
+use crate::scanner::token::get_fp_from_token;
 
 pub struct Interpreter {
     pub error: bool,
-    root_exp: Exp,
     builtin: Builtin
 }
 
-pub fn error() -> Value {
-    Value{value: Val::Error, val_type: Type::UnknownType}
+pub fn error(message: &str, exp: &Exp) -> Value {
+    error!("{}: {}", message.to_string(), get_fp_from_token(&exp.token));
+    Value{value: Val::NullValue, val_type: Type::NullType}
+}
+
+pub fn invalid_exp_error(exp: &Exp) -> Value {
+    error!("!!!Invalid expression reached!!!: {}", get_fp_from_token(&exp.token));
+    Value{value: Val::NullValue, val_type: Type::NullType}
 }
 
 impl Interpreter {
     pub fn init(builtin: &Builtin) -> Interpreter {
         Interpreter{
             error: false,
-            root_exp: Exp{
-                exp: Expression::Empty,
-                exp_type: Type::NullType,
-                token: make_empty_token()
-            },
             builtin: builtin.clone()
         }
     }
@@ -44,15 +42,13 @@ impl Interpreter {
             Expression::Primitive{..} => self.interpret_primitive(&exp, env, expected_type),
             Expression::Reference{..} => self.interpret_reference(&exp, env, expected_type),
             Expression::Branch{..} => self.interpret_branch(&exp, env, expected_type),
+            Expression::Iter{..} => self.interpret_iter(&exp, env, expected_type),
             Expression::ListDef{..} => self.interpret_list_def(&exp, env, expected_type),
             Expression::TupleDef{..} => self.interpret_tuple_def(&exp, env, expected_type),
             Expression::TupleAccess{..} => self.interpret_tuple_access(&exp, env, expected_type),
             Expression::DictDef{..} => self.interpret_dict_def(&exp, env, expected_type),
-            Expression::SchemaDef{..} => self.interpret_schema_def(&exp, env, expected_type),
-            _ => {
-                // TODO: Throw error here, invalid expression
-                error()
-            }
+            Expression::SchemaDef{..} => self.interpret_schema_def(&exp, expected_type),
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -74,7 +70,7 @@ impl Interpreter {
                         Value{value: Val::NullValue, val_type: Type::NullType}
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -89,20 +85,20 @@ impl Interpreter {
                     _ => Value{value: Val::NullValue, val_type: Type::NullType}
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
     fn interpret_alias(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
         trace!("interpret_alias: {:?}", exp);
         match &exp.exp {
-            Expression::Alias{ident, alias, after_alias_exp} => {
+            Expression::Alias{after_alias_exp, ..} => {
                 match &**after_alias_exp {
                     Some(after_exp) => self.interpret(after_exp, env, &expected_type),
                     _ => Value{value: Val::NullValue, val_type: Type::NullType}
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -127,7 +123,7 @@ impl Interpreter {
                     val_type: func_type
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -139,8 +135,7 @@ impl Interpreter {
                 match ident_value.value {
                     Val::StringValue{value} => {
                         if args.len() != 1 {
-                            // TODO: Throw error here, argument size must be 1
-                            error()
+                            error("Argument count must be 1 for string indexing", exp)
                         } else {
                             type_conforms(&ident_value.val_type, expected_type, &exp.token);
                             let arg = self.interpret(args.get(0).unwrap(), app_env, &Type::IntType);
@@ -152,20 +147,16 @@ impl Interpreter {
                                             value: Val::CharValue{value: char.to_string()},
                                             val_type: Type::CharType
                                         },
-                                        _ => {
-                                            // TODO: Throw error here, invalid index
-                                            error()
-                                        }
+                                        _ => error("Invalid value for string indexing", exp)
                                     }
                                 }
-                                _ => error()
+                                _ => invalid_exp_error(exp)
                             }
                         }
                     },
                     Val::ListValue{values} => {
                         if args.len() != 1 {
-                            // TODO: Throw error here, argument size must be 1
-                            error()
+                            error("Argument count must be 1 for list indexing", exp)
                         } else {
                             match ident_value.val_type {
                                 Type::ListType{list_type} => {
@@ -175,23 +166,19 @@ impl Interpreter {
                                         Val::IntValue{value} => {
                                             match values.get(value as usize) {
                                                 Some(value) => value.clone(),
-                                                _ => {
-                                                    // TODO: Throw error here, invalid index
-                                                    error()
-                                                }
+                                                _ => error("Invalid value for list indexing", exp)
                                             }
                                         }
-                                        _ => error()
+                                        _ => invalid_exp_error(exp)
                                     }
                                 }
-                                _ => error()
+                                _ => invalid_exp_error(exp)
                             }
                         }
                     },
                     Val::DictValue{values} => {
                         if args.len() != 1 {
-                            // TODO: Throw error here, argument size must be 1
-                            error()
+                            error("Argument count must be 1 for dictionary access", exp)
                         } else {
                             match ident_value.val_type {
                                 Type::DictType{key_type, value_type} => {
@@ -199,20 +186,16 @@ impl Interpreter {
                                     let arg = self.interpret(args.get(0).unwrap(), app_env, &*key_type);
                                     match values.iter().find(|v| {v.0 == arg}) {
                                         Some(value) => value.clone().1,
-                                        _ => {
-                                            // TODO: Throw error here, key does not exist
-                                            error()
-                                        }
+                                        _ => error("Key does not exist", exp)
                                     }
                                 },
-                                _ => error()
+                                _ => invalid_exp_error(exp)
                             }
                         }
                     },
                     Val::FuncValue{builtin_ident, parameters, body, env} => {
                         if parameters.len() != args.len() {
-                            // TODO: Throw error here, arguments do not match function parameters
-                            error()
+                            error("Argument count does not match function parameter count", exp)
                         } else {
                             match ident_value.val_type {
                                 Type::FuncType{return_type, ..} => {
@@ -228,17 +211,14 @@ impl Interpreter {
                                         _ => self.interpret(&body, &mut body_env, &*return_type)
                                     }
                                 },
-                                _ => error()
+                                _ => invalid_exp_error(exp)
                             }
                         }
                     },
-                    _ => {
-                        // TODO: Throw error here, application can not be done on exp type
-                        error()
-                    }
+                    _ => error("Expression invalid for application", exp)
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -305,13 +285,10 @@ impl Interpreter {
                     }
                 }) {
                     Some(value) => self.interpret(&value.case_exp, env, expected_type),
-                    _ => {
-                        // TODO: Throw error here, no matching cases
-                        error()
-                    }
+                    _ => error("No patterns matched. Use the catch-all _ pattern", exp)
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -321,11 +298,11 @@ impl Interpreter {
             Expression::Primitive{operator, left, right} => {
                 let left_value = self.interpret(left, env, &Type::UnknownType);
                 let right_value = self.interpret(right, env, &Type::UnknownType);
-                let result = operator.interpret(&left_value, &right_value);
+                let result = operator.interpret(&left_value, &right_value, exp);
                 type_conforms(&result.val_type, expected_type, &exp.token);
                 result
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -339,16 +316,10 @@ impl Interpreter {
                         type_conforms(&r.val_type, expected_type, &exp.token);
                         r.clone()
                     },
-                    _ => {
-                        // TODO: Throw error here, reference does not exist
-                        error!("Reference \"{}\" does not exist: {}",
-                                ident,
-                                get_fp_from_token(&exp.token));
-                        error()
-                    }
+                    _ => error(&("Reference \"".to_string() + ident + "\" does not exist"), exp)
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -372,13 +343,69 @@ impl Interpreter {
                             }
                         }
                     },
-                    _ => {
-                        // TODO: Throw error here, not a valid condition
-                        error()
-                    }
+                    _ => error("Invalid branch condition", exp)
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
+        }
+    }
+
+    fn get_iter_size(&mut self, exp: &Exp, env: &mut Env) -> usize {
+        trace!("get_iter_size: {:?}", exp);
+        let iter_value = self.interpret(exp, env, &Type::UnknownType);
+        match iter_value.value.clone() {
+            Val::IntValue{value} => value as usize,
+            Val::StringValue{value} => value.len(),
+            Val::ListValue{values} => values.len(),
+            Val::TupleValue{values} => values.len(),
+            Val::DictValue{values} => values.len(),
+            _ => {
+                error("Invalid iterator", exp);
+                0
+            }
+        }
+    }
+
+    fn get_iter_element(&mut self, index: usize, exp: &Exp, env: &mut Env) -> Value {
+        trace!("get_iter_element: {:?}", exp);
+        let iter_value = self.interpret(exp, env, &Type::UnknownType);
+        let iter_result = match iter_value.value.clone() {
+            Val::IntValue{..} =>
+                Some(Value{value: Val::IntValue{value: index as i32}, val_type: Type::IntType}),
+            Val::StringValue{value} =>
+                Some(Value{
+                    value: Val::CharValue{value: value.as_bytes()[index].clone().to_string() },
+                    val_type: Type::CharType
+                }),
+            Val::ListValue{values} => values.get(index).cloned(),
+            Val::TupleValue{values} => values.get(index).cloned(),
+            _ => {
+                error("Invalid iterator", exp);
+                None
+            }
+        };
+        match iter_result {
+            Some(value) => value,
+            _ => Value{value: Val::NullValue, val_type: Type::NullType}
+        }
+    }
+
+    fn interpret_iter(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_iter: {:?}", exp);
+        match &exp.exp {
+            Expression::Iter{iter, iter_exp } => {
+                let iterator_size = self.get_iter_size(iter, env);
+                let mut index: usize = 0;
+                while index < iterator_size {
+                    let iter_element = self.get_iter_element(iterator_size, iter, env);
+                    let mut iter_env = env.clone();
+                    iter_env.insert("elem".to_string(), iter_element);
+                    self.interpret(&iter_exp, &mut iter_env, expected_type);
+                    index += 1;
+                };
+                Value{value: Val::NullValue, val_type: Type::NullType}
+            },
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -395,7 +422,7 @@ impl Interpreter {
                     type_conforms(&list_val.val_type, &list_type, &exp.token);
                     list_val
                 }).collect();
-                let mut expected_list_type = Type::ListType{
+                let expected_list_type = Type::ListType{
                     list_type: Box::new(match list_values.clone().first() {
                         Some(value) => value.val_type.clone(),
                         _ => Type::UnknownType
@@ -404,7 +431,7 @@ impl Interpreter {
                 type_conforms(&expected_list_type, expected_type, &exp.token);
                 Value{value: Val::ListValue{values: list_values}, val_type: expected_list_type}
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -427,7 +454,7 @@ impl Interpreter {
                     val_type: Type::TupleType{tuple_types}
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -442,13 +469,10 @@ impl Interpreter {
                         type_conforms(&tuple_element.val_type, expected_type, &exp.token);
                         tuple_element
                     },
-                    _ => {
-                        // TODO: Throw error here, not a tuple
-                        error()
-                    }
+                    _ => error("Not a valid tuple value", exp)
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
@@ -478,20 +502,22 @@ impl Interpreter {
                     val_type: Type::DictType{key_type: Box::new(key_type), value_type: Box::new(value_type)}
                 }
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 
-    fn interpret_schema_def(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+    fn interpret_schema_def(&mut self, exp: &Exp, expected_type: &Type) -> Value {
         trace!("interpret_schema_def: {:?}", exp);
         match &exp.exp {
             Expression::SchemaDef{mapping} => {
-                Value{
+                let schema_val = Value{
                     value: Val::SchemaValue{values: mapping.clone()},
                     val_type: Type::SchemaType
-                }
+                };
+                type_conforms(&schema_val.val_type, expected_type, &exp.token);
+                schema_val
             },
-            _ => error()
+            _ => invalid_exp_error(exp)
         }
     }
 }

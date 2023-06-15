@@ -44,6 +44,7 @@
 
 <smp> ::= <utight>[<op><utight>]
     | 'if' '('<smp>')' '{' <smp> '}' ['else' '{' <smp> '}']
+    | 'iter' '('<smp>')' '{' <smp> '}'
     | <collection>['++' <tight>]
     | '('<smp>[','<smp>]')'
     | '$''{'<ident>':'<type>[','<ident>':'<type>]*'}'

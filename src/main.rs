@@ -9,7 +9,7 @@ use log::{error, trace};
 use std::error::Error;
 use clap::Parser;
 use std::path::PathBuf;
-use std::{fs, io};
+use std::{fs, io, panic};
 use std::io::Write;
 use substring::Substring;
 use crate::builtin::builtin::Builtin;
@@ -76,7 +76,7 @@ fn make_ast(script: &String) -> Result<Exp, Box<dyn Error>> {
 }
 
 fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
-    let mut builtin = Builtin::init();
+    let builtin = Builtin::init();
     let mut env = builtin.load_builtins(&interpreter::value::Env::new());
     let interpreter = &mut Interpreter::init(&builtin);
     let result = interpreter.interpret(
@@ -95,7 +95,7 @@ fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
 }
 
 fn run_retl_repl() -> Result<(), Box<dyn Error>> {
-    let mut builtin = Builtin::init();
+    let builtin = Builtin::init();
     let mut env = builtin.load_builtins(&interpreter::value::Env::new());
     let interpreter = &mut Interpreter::init(&builtin);
     let mut repl_input = String::new();
@@ -146,18 +146,20 @@ fn main() {
             .format_target(false).format_timestamp(None).init();
     }
 
-    let result = match retl_args.file {
-        Some(path_buf) => {
-            match read_retl_file(&path_buf) {
-                Ok(script) => run_retl(&script),
-                Err(e) => Err(e)
-            }
-        },
-        None => run_retl_repl()
-    };
+    panic::catch_unwind(|| {
+        let result = match retl_args.file {
+            Some(path_buf) => {
+                match read_retl_file(&path_buf) {
+                    Ok(script) => run_retl(&script),
+                    Err(e) => Err(e)
+                }
+            },
+            None => run_retl_repl()
+        };
 
-    match result {
-        Ok(_) => (),
-        Err(e) => error!("{}", e.to_string())
-    }
+        match result {
+            Ok(_) => (),
+            Err(e) => error!("{}", e.to_string())
+        }
+    }).expect("Fatal error occurred")
 }

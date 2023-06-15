@@ -1,6 +1,6 @@
 use strum_macros::Display;
 use crate::{Exp, Type, Value};
-use crate::defs::retl_type::{concat_tuple_types, type_conforms};
+use crate::defs::retl_type::type_conforms;
 use crate::interpreter::interpreter::error;
 use crate::interpreter::value::Val;
 
@@ -101,7 +101,7 @@ impl Operator {
         }
     }
 
-    pub fn interpret(&self, left: &Value, right: &Value) -> Value {
+    pub fn interpret(&self, left: &Value, right: &Value, exp: &Exp) -> Value {
         match *self {
             Operator::Plus => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
@@ -119,82 +119,55 @@ impl Operator {
                 (Val::StringValue{value: v1}, Val::CharValue{value: v2}) => {
                     Value{value: Val::StringValue{value: v1 + &*v2 }, val_type: Type::StringType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'+\'", exp)
             },
             Operator::Minus => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
                     Value{value: Val::IntValue{value: v1 - v2}, val_type: Type::IntType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'-\'", exp)
             },
             Operator::Multiply => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
                     Value{value: Val::IntValue{value: v1 * v2}, val_type: Type::IntType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'*\'", exp)
             },
             Operator::Divide => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
                     Value{value: Val::IntValue{value: v1 / v2}, val_type: Type::IntType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'/\'", exp)
             },
             Operator::Modulus => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
                     Value{value: Val::IntValue{value: v1 % v2}, val_type: Type::IntType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'%\'", exp)
             },
             Operator::GreaterThan => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
                     Value{value: Val::BoolValue{value: v1 > v2}, val_type: Type::BoolType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'>\'", exp)
             },
             Operator::LessThan => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
                     Value{value: Val::BoolValue{value: v1 < v2}, val_type: Type::BoolType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'<\'", exp)
             },
             Operator::GreaterThanEqualTo => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
                     Value{value: Val::BoolValue{value: v1 >= v2}, val_type: Type::BoolType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'>=\'", exp)
             },
             Operator::LessThanEqualTo => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
                     Value{value: Val::BoolValue{value: v1 <= v2}, val_type: Type::BoolType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'<=\'", exp)
             },
             Operator::Equal => match (left.value.clone(), right.value.clone()) {
                 (Val::IntValue{value: v1}, Val::IntValue{value: v2}) => {
@@ -212,7 +185,7 @@ impl Operator {
                 (Val::ListValue{values: v1}, Val::ListValue{values: v2}) => {
                     Value{
                         value: Val::BoolValue{value: v1.iter().zip(v2.clone()).all(|(l1, l2)| {
-                            match self.interpret(l1, &l2).value {
+                            match self.interpret(l1, &l2, exp).value {
                                 Val::BoolValue{value} => value,
                                 _ => false
                             }
@@ -223,7 +196,7 @@ impl Operator {
                 (Val::TupleValue{values: v1}, Val::TupleValue{values: v2}) => {
                     Value{
                         value: Val::BoolValue{value: v1.iter().zip(v2.clone()).all(|(t1, t2)| {
-                            match self.interpret(t1, &t2).value {
+                            match self.interpret(t1, &t2, exp).value {
                                 Val::BoolValue{value} => value,
                                 _ => false
                             }
@@ -231,37 +204,25 @@ impl Operator {
                         val_type: Type::BoolType
                     }
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'==\'", exp)
             },
             Operator::And => match (left.value.clone(), right.value.clone()) {
                 (Val::BoolValue{value: v1}, Val::BoolValue{value: v2}) => {
                     Value{value: Val::BoolValue{value: v1 && v2}, val_type: Type::BoolType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'and\'", exp)
             },
             Operator::Or => match (left.value.clone(), right.value.clone()) {
                 (Val::BoolValue{value: v1}, Val::BoolValue{value: v2}) => {
                     Value{value: Val::BoolValue{value: v1 || v2}, val_type: Type::BoolType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'or\'", exp)
             },
             Operator::Not => match (left.value.clone(), right.value.clone()) {
                 (Val::BoolValue{value: v1}, Val::BoolValue{value: v2}) => {
                     Value{value: Val::BoolValue{value: v1 == v2}, val_type: Type::BoolType}
                 },
-                _ => {
-                    // TODO: Throw error here, invalid types for operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'not\'", exp)
             },
             Operator::CollectionConcat => match (left.value.clone(), right.value.clone()) {
                 (Val::ListValue{values: v1}, Val::ListValue{values: v2}) => {
@@ -279,10 +240,7 @@ impl Operator {
                 //         val_type: left.val_type.clone()
                 //     }
                 // },
-                _ => {
-                    // TODO: Throw error here, invalid operand
-                    error()
-                }
+                _ => error("Invalid types for operand \'++\'", exp)
             }
         }
     }

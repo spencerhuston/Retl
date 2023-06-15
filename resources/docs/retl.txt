@@ -2,7 +2,6 @@ TODO:
 - Fix error logging during interpreter phase
 - Implement builtin functions
 - Ending type-info
-- Finish type-aliasing implementation
 - Clean up TODO's
 
 
@@ -19,6 +18,7 @@ FEATURES:
 2. basic arithmetic (DONE)
 3. ints, strings, chars, bools, lists, dicts, tuples, schemas (DONE)
 - type inference (DONE)
+- type-aliasing (DONE)
 - range operator .. (DONE)
 4. basic pattern matching (DONE)
 - match by type: {name}: {type}
@@ -39,7 +39,7 @@ FEATURES:
 - foreach (TODO)
 - range (TODO)
 7. collection operators
-- list append operator: ++ (TODO)
+- list append operator: ++ (DONE)
 - list/dict access operator: () (application) (DONE)
 - tuple access operator: . (DONE)
 8. REPL (DONE)

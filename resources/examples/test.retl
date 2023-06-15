@@ -1,4 +1,12 @@
-let l = [3, 4];
-let l2 = [1, 2] ++ l;
-let l3 = l ++ l2;
-l3(4)
+alias entry = dict[string: list[int -> int]];
+let e: entry = [
+    "test": [
+        |a: int| -> int { a + 1 },
+        |a: int| -> int { a + 2 }
+    ],
+    "test2": [
+        |a: int| -> int { a + 3 },
+        |a: int| -> int { a + 4 }
+    ]
+];
+e("test2")(1)(1)

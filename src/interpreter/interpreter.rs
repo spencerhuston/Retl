@@ -32,6 +32,7 @@ impl Interpreter {
         match &exp.exp {
             Expression::Lit{..} => self.interpret_literal(&exp, expected_type),
             Expression::Let{..} => self.interpret_let(&exp, env, expected_type),
+            Expression::Alias{..} => self.interpret_alias(&exp, env, expected_type),
             Expression::Lambda{..} => self.interpret_lambda(&exp, env, expected_type),
             Expression::Application{..} => self.interpret_application(&exp, env, expected_type),
             Expression::Match{..} => self.interpret_match(&exp, env, expected_type),
@@ -87,9 +88,18 @@ impl Interpreter {
         }
     }
 
-    // fn interpret_alias(&mut self) -> Value {
-    //
-    // }
+    fn interpret_alias(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_alias: {:?}", exp);
+        match &exp.exp {
+            Expression::Alias{ident, alias, after_alias_exp} => {
+                match &**after_alias_exp {
+                    Some(after_exp) => self.interpret(after_exp, env, &expected_type),
+                    _ => Value{value: Val::NullValue, val_type: Type::NullType}
+                }
+            },
+            _ => error()
+        }
+    }
 
     fn interpret_lambda(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
         trace!("interpret_lambda: {:?}", exp);

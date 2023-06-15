@@ -15,7 +15,8 @@ pub struct Parser {
     pub root_exp: Exp,
     tokens: Vec<Token>,
     index: usize,
-    dummy_count: i32
+    dummy_count: i32,
+    aliases: HashMap<String, Type>
 }
 
 fn get_token_as_string(token: Token) -> String {
@@ -59,7 +60,7 @@ impl Parser {
                 exp_type: NullType,
                 token: make_empty_token()
             },
-            tokens: vec![], index: 0, dummy_count: 0
+            tokens: vec![], index: 0, dummy_count: 0, aliases: HashMap::new()
         }
     }
 
@@ -345,6 +346,8 @@ impl Parser {
         let ident = self.match_ident();
         self.match_required_delimiter(Delimiter::Assignment);
         let alias = self.parse_type();
+
+        self.aliases.insert(ident.clone(), alias.clone());
 
         let mut after_alias_exp: Option<Exp> = None;
         if self.match_optional_delimiter(Delimiter::StatementEnd) {
@@ -971,7 +974,21 @@ impl Parser {
                 self.match_required_delimiter(Delimiter::ReturnType);
                 let return_type = self.parse_type();
                 FuncType{param_types, return_type: Box::new(return_type)}
-            }
+            },
+            Some(Token::Ident{ident, .. }) => {
+                match self.aliases.get(&*ident) {
+                    Some(aliased_type) => {
+                        let type_sig = aliased_type.clone();
+                        self.advance();
+                        type_sig
+                    },
+                    _ => {
+                        error!("Invalid type-alias: {}",
+                            get_fp_from_token(&self.curr().unwrap()));
+                        UnknownType
+                    }
+                }
+            } ,
             Some(_) => {
                 self.error = true;
                 error!("Invalid type signature: {}",

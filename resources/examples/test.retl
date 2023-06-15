@@ -1,5 +1,4 @@
-let a = 0..10;
-iter (10) {
-    elem + 1;
-    println("test")
+let a = ["Hello", "world", "!"];
+iter (a) {
+    println(__elem)
 }

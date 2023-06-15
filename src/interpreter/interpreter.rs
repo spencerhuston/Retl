@@ -397,9 +397,9 @@ impl Interpreter {
                 let iterator_size = self.get_iter_size(iter, env);
                 let mut index: usize = 0;
                 while index < iterator_size {
-                    let iter_element = self.get_iter_element(iterator_size, iter, env);
+                    let iter_element = self.get_iter_element(index, iter, env);
                     let mut iter_env = env.clone();
-                    iter_env.insert("elem".to_string(), iter_element);
+                    iter_env.insert("__elem".to_string(), iter_element);
                     self.interpret(&iter_exp, &mut iter_env, expected_type);
                     index += 1;
                 };

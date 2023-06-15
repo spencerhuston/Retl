@@ -28,6 +28,7 @@
 <match> ::= 'match' <atom> '{' 'case' <pattern> '=>' <smp>[',''case' <pattern> '=>' <smp>]*'}'
 
 <tight> ::= <app>['|>'<app>]
+    | '('<smp>')'
     | '{'<exp>'}'
 
 <arithOp> ::= '+' | '-' | '*' | '/' | '%' |

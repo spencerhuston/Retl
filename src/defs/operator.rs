@@ -254,6 +254,15 @@ impl Operator {
                     error()
                 }
             },
+            Operator::Not => match (left.value.clone(), right.value.clone()) {
+                (Val::BoolValue{value: v1}, Val::BoolValue{value: v2}) => {
+                    Value{value: Val::BoolValue{value: v1 == v2}, val_type: Type::BoolType}
+                },
+                _ => {
+                    // TODO: Throw error here, invalid types for operand
+                    error()
+                }
+            },
             Operator::CollectionConcat => match (left.value.clone(), right.value.clone()) {
                 (Val::ListValue{values: v1}, Val::ListValue{values: v2}) => {
                     let mut concat_list = v1.clone();
@@ -274,10 +283,6 @@ impl Operator {
                     // TODO: Throw error here, invalid operand
                     error()
                 }
-            },
-            _ => {
-                // TODO: Throw error here, invalid operand
-                error()
             }
         }
     }

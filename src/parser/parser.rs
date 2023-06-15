@@ -398,7 +398,7 @@ impl Parser {
         match operator {
             Some(Operator::Not) => Exp{
                 exp: Expression::Primitive{
-                    operator: Operator::And,
+                    operator: Operator::Not,
                     left: Box::new(Exp{
                         exp: Expression::Lit{lit: BoolLit{literal: false}},
                         exp_type: BoolType,
@@ -431,6 +431,13 @@ impl Parser {
                     => {
                 let exp = self.parse_expression();
                 self.match_required_delimiter(Delimiter::BraceRight);
+                exp
+            },
+            Some(Token::Delimiter{..})
+                if self.match_optional_delimiter(Delimiter::ParenLeft)
+                    => {
+                let exp = self.parse_simple_expression();
+                self.match_required_delimiter(Delimiter::ParenRight);
                 exp
             },
             Some(_) => {

@@ -1,10 +1,10 @@
-use log::{trace};
+use log::{error, trace};
 
 use crate::defs::expression::{Exp, Expression, Literal, Parameter, Pattern};
 use crate::defs::retl_type::{type_conforms, type_conforms_no_error};
 use crate::defs::retl_type::Type;
 use crate::interpreter::value::{Value, Env, Val};
-use crate::scanner::token::make_empty_token;
+use crate::scanner::token::{get_fp_from_token, make_empty_token};
 
 pub struct Interpreter {
     pub error: bool,
@@ -42,6 +42,7 @@ impl Interpreter {
             Expression::TupleDef{..} => self.interpret_tuple_def(&exp, env, expected_type),
             Expression::TupleAccess{..} => self.interpret_tuple_access(&exp, env, expected_type),
             Expression::DictDef{..} => self.interpret_dict_def(&exp, env, expected_type),
+            Expression::SchemaDef{..} => self.interpret_schema_def(&exp, env, expected_type),
             _ => {
                 // TODO: Throw error here, invalid expression
                 error()
@@ -67,7 +68,7 @@ impl Interpreter {
                         Value{value: Val::NullValue, val_type: Type::NullType}
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -82,7 +83,7 @@ impl Interpreter {
                     _ => Value{value: Val::NullValue, val_type: Type::NullType}
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -111,7 +112,7 @@ impl Interpreter {
                     val_type: func_type
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -140,10 +141,10 @@ impl Interpreter {
                                                 }
                                             }
                                         }
-                                        _ => {error()}
+                                        _ => error()
                                     }
                                 }
-                                _ => {error()}
+                                _ => error()
                             }
                         }
                     },
@@ -164,7 +165,7 @@ impl Interpreter {
                                         }
                                     }
                                 },
-                                _ => {error()}
+                                _ => error()
                             }
                         }
                     },
@@ -184,7 +185,7 @@ impl Interpreter {
                                         });
                                     self.interpret(&body, &mut body_env, &*return_type)
                                 },
-                                _ => {error()}
+                                _ => error()
                             }
                         }
                     },
@@ -194,7 +195,7 @@ impl Interpreter {
                     }
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -267,7 +268,7 @@ impl Interpreter {
                     }
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -281,7 +282,7 @@ impl Interpreter {
                 type_conforms(&result.val_type, expected_type, &exp.token);
                 result
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -297,11 +298,14 @@ impl Interpreter {
                     },
                     _ => {
                         // TODO: Throw error here, reference does not exist
+                        error!("Reference \"{}\" does not exist: {}",
+                                ident,
+                                get_fp_from_token(&exp.token));
                         error()
                     }
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -331,7 +335,7 @@ impl Interpreter {
                     }
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -349,7 +353,7 @@ impl Interpreter {
                 }).collect();
                 Value{value: Val::ListValue{values: list_values}, val_type: expected_list_type}
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -372,7 +376,7 @@ impl Interpreter {
                     val_type: Type::TupleType{tuple_types}
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -393,7 +397,7 @@ impl Interpreter {
                     }
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
@@ -423,11 +427,20 @@ impl Interpreter {
                     val_type: Type::DictType{key_type: Box::new(key_type), value_type: Box::new(value_type)}
                 }
             },
-            _ => {error()}
+            _ => error()
         }
     }
 
-    // fn interpret_schema_def(&mut self) -> Value {
-    //
-    // }
+    fn interpret_schema_def(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_schema_def: {:?}", exp);
+        match &exp.exp {
+            Expression::SchemaDef{mapping} => {
+                Value{
+                    value: Val::SchemaValue{values: mapping.clone()},
+                    val_type: Type::SchemaType
+                }
+            },
+            _ => error()
+        }
+    }
 }

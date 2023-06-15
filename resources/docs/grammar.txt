@@ -30,7 +30,7 @@
 <tight> ::= <app>['|>'<app>]
     | '{'<_exp>'}'
 
-<arithOp> ::= '+' | '-' | '*' | '/' | '%'
+<arithOp> ::= '+' | '-' | '*' | '/' | '%' |
 <boolOp> ::= '<' | '>' | '<=' | '>=' | '==' | 'not' | 'and' | 'or'
 <op> ::= <arithOp> | <boolOp> | '++'
 
@@ -38,9 +38,11 @@
 
 <alias> ::= 'alias' <ident> '=' <type>
 
+<collection> ::= '['[<smp>[':'<smp>][','<smp>[':'<smp>]]*]']'
+
 <smp> ::= <utight>[<op><utight>]
     | 'if' '('<smp>')' '{' <smp> '}' ['else' '{' <smp> '}']
-    | '['[<smp>[':'<smp>][','<smp>[':'<smp>]]*]']'
+    | <collection>['++' <collection>]
     | '('<smp>[','<smp>]')'
     | '$''{'<ident>':'<type>[','<ident>':'<type>]*'}'
     | <match>

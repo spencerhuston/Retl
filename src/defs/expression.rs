@@ -50,7 +50,7 @@ pub enum Expression {
     Alias{ident: String, alias: Type, after_alias_exp: Box<Option<Exp>>}, // TODO Interpreter
     Lambda{params: Vec<Parameter>, return_type: Type, body: Box<Exp>},
     Application{ident: Box<Exp>, args: Vec<Exp>},
-    Match{match_exp: Box<Exp>, cases: Vec<Case>}, // TODO Interpreter
+    Match{match_exp: Box<Exp>, cases: Vec<Case>},
     Primitive{operator: Operator, left: Box<Exp>, right: Box<Exp>},
     Reference{ident: String},
     Branch{condition: Box<Exp>, if_branch: Box<Exp>, else_branch: Box<Option<Exp>>},
@@ -58,6 +58,6 @@ pub enum Expression {
     TupleDef{values: Vec<Exp>},
     TupleAccess{ident: Box<Exp>, index: usize},
     DictDef{mapping: HashMap<Literal, Exp>},
-    SchemaDef{mapping: HashMap<String, Type>}, // TODO: Need built-ins first
+    SchemaDef{mapping: HashMap<String, Type>},
     Empty
 }

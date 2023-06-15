@@ -423,7 +423,15 @@ impl Parser {
                     let mut outer_app = self.parse_application();
                     match &mut outer_app.exp {
                         Expression::Application{ident: _, ref mut args} => {
-                            args.insert(0, inner_app);
+                            args.insert(0, inner_app.clone());
+                            inner_app = outer_app
+                        },
+                        Expression::Reference{ident: _} => {
+                            inner_app = Exp{
+                                exp: Expression::Application{ident: Box::new(outer_app.clone()), args: vec![inner_app]},
+                                exp_type: outer_app.exp_type.clone(),
+                                token: outer_app.token.clone()
+                            }
                         },
                         _ => {
                             self.error = true;
@@ -432,7 +440,6 @@ impl Parser {
                             ()
                         }
                     }
-                    inner_app = outer_app
                 }
                 inner_app
             },
@@ -857,25 +864,6 @@ impl Parser {
             exp_type: func_type.clone(),
             token: token.clone()
         }
-        // let ident = self.anon();
-        // let let_type = func_type.clone();
-        // let let_exp = lambda;
-        // let after_let_exp = Exp{
-        //     exp: Expression::Reference{ident: ident.clone()},
-        //     exp_type: func_type.clone(),
-        //     token: token.clone()
-        // };
-        //
-        // Exp{
-        //     exp: Expression::Let{
-        //         ident,
-        //         let_type,
-        //         let_exp: Box::new(let_exp),
-        //         after_let_exp: Box::new(Some(after_let_exp))
-        //     },
-        //     exp_type: func_type,
-        //     token
-        // }
     }
 
     fn parse_arguments(&mut self) -> Vec<Exp> {

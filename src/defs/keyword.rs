@@ -66,9 +66,7 @@ pub enum Keyword {
     #[strum(serialize = "foldr")]
     Foldr,
     #[strum(serialize = "foreach")]
-    Foreach,
-    #[strum(serialize = "range")]
-    Range
+    Foreach
 }
 
 impl Keyword {
@@ -93,8 +91,7 @@ impl Keyword {
             Keyword::Zip |
             Keyword::Foldl |
             Keyword::Foldr |
-            Keyword::Foreach |
-            Keyword::Range
+            Keyword::Foreach
             => true,
             _ => false
         }

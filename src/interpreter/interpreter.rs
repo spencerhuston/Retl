@@ -132,6 +132,31 @@ impl Interpreter {
             Expression::Application{ident, args} => {
                 let ident_value = self.interpret(ident, app_env, &Type::UnknownType);
                 match ident_value.value {
+                    Val::StringValue{value} => {
+                        if args.len() != 1 {
+                            // TODO: Throw error here, argument size must be 1
+                            error()
+                        } else {
+                            type_conforms(&ident_value.val_type, expected_type, &exp.token);
+                            let arg = self.interpret(args.get(0).unwrap(), app_env, &Type::IntType);
+                            let string_val = value.clone();
+                            match arg.value {
+                                Val::IntValue{value} => {
+                                    match string_val.get(value as usize..(value + 1) as usize) {
+                                        Some(char) if char != "\"" => Value{
+                                            value: Val::CharValue{value: char.to_string()},
+                                            val_type: Type::CharType
+                                        },
+                                        _ => {
+                                            // TODO: Throw error here, invalid index
+                                            error()
+                                        }
+                                    }
+                                }
+                                _ => error()
+                            }
+                        }
+                    },
                     Val::ListValue{values} => {
                         if args.len() != 1 {
                             // TODO: Throw error here, argument size must be 1

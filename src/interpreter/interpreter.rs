@@ -386,14 +386,22 @@ impl Interpreter {
         trace!("interpret_list_def: {:?}", exp);
         match &exp.exp {
             Expression::ListDef{values} => {
-                let expected_list_type = type_conforms(&exp.exp_type, expected_type, &exp.token);
-                let list_type = match expected_list_type.clone() {
+                let list_type = match exp.exp_type.clone() {
                     Type::ListType{list_type} => *list_type,
                     _ => Type::UnknownType
                 };
                 let list_values: Vec<Value> = values.iter().map(|e: &Exp| {
-                    self.interpret(e, env, &list_type)
+                    let list_val = self.interpret(e, env, &Type::UnknownType);
+                    type_conforms(&list_val.val_type, &list_type, &exp.token);
+                    list_val
                 }).collect();
+                let mut expected_list_type = Type::ListType{
+                    list_type: Box::new(match list_values.clone().first() {
+                        Some(value) => value.val_type.clone(),
+                        _ => Type::UnknownType
+                    })
+                };
+                type_conforms(&expected_list_type, expected_type, &exp.token);
                 Value{value: Val::ListValue{values: list_values}, val_type: expected_list_type}
             },
             _ => error()

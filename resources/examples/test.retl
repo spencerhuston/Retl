@@ -1,2 +1,15 @@
-let a: string = readln();
-println(a)
+let user_entry: dict[int: string] = [
+    0: readln(),
+    1: readln()
+];
+
+let get_user_list = |e: dict[int: string]| -> list[string] {
+    [e(0)] ++ [e(1)]
+};
+
+let user_list = get_user_list(user_entry);
+let user1 = user_list(0);
+let user2 = user_list(1);
+
+println(user1);
+println(user2)

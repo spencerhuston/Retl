@@ -76,11 +76,22 @@ impl Builtin {
             ("l".to_string(), ListType{list_type: Box::new(Any)}),
             ("f".to_string(), FuncType{param_types: vec![Any], return_type: Box::new(Any)})
         ], return_type: Any });
+        builtins.insert("foldl".to_string(), BuiltinMeta { params: vec![
+            ("acc".to_string(), Any),
+            ("l".to_string(), ListType{list_type: Box::new(Any)}),
+            ("f".to_string(), FuncType{param_types: vec![Any, Any], return_type: Box::new(Any)})
+        ], return_type: Any });
+        builtins.insert("foldr".to_string(), BuiltinMeta { params: vec![
+            ("acc".to_string(), Any),
+            ("l".to_string(), ListType{list_type: Box::new(Any)}),
+            ("f".to_string(), FuncType{param_types: vec![Any, Any], return_type: Box::new(Any)})
+        ], return_type: Any });
         builtins.insert("zip".to_string(), BuiltinMeta { params: vec![
             ("l1".to_string(), ListType{list_type: Box::new(Any)}),
             ("l2".to_string(), ListType{list_type: Box::new(Any)})
         ], return_type: ListType{list_type: Box::new(TupleType{tuple_types: vec![Any, Any]})} });
-        builtins.insert("type".to_string(), BuiltinMeta { params: vec![("val".to_string(), UnknownType)], return_type: StringType });
+        builtins.insert("len".to_string(), BuiltinMeta { params: vec![("c".to_string(), Any)], return_type: IntType });
+        builtins.insert("type".to_string(), BuiltinMeta { params: vec![("v".to_string(), Any)], return_type: StringType });
         Builtin{builtins}
     }
 
@@ -141,10 +152,36 @@ impl Builtin {
             },
             Keyword::Map => self.map(args, exp, interpreter),
             Keyword::Filter => self.filter(args, exp, interpreter),
+            Keyword::Foldl => self.foldl(args, exp, interpreter),
+            Keyword::Foldr => self.foldr(args, exp, interpreter),
             Keyword::Zip => self.zip(args, exp),
             Keyword::Type => {
                 Value{value: Val::StringValue{value: args[0].val_type.as_string()}, val_type: StringType}
             },
+            Keyword::Len => {
+                let size = match &args[0].value {
+                    Val::ListValue{values} => {
+                        type_conforms(&args[0].val_type, &ListType{list_type: Box::new(Any)}, &exp.token);
+                        Some(values.len())
+                    },
+                    Val::TupleValue{values} => {
+                        type_conforms(&args[0].val_type, &TupleType{tuple_types: vec![Any; values.len()]}, &exp.token);
+                        Some(values.len())
+                    },
+                    Val::DictValue{values} => {
+                        type_conforms(&args[0].val_type, &DictType{key_type: Box::new(Any), value_type: Box::new(Any)}, &exp.token);
+                        Some(values.len())
+                    },
+                    _ => None
+                };
+                match size {
+                    Some(size) => Value{value: Val::IntValue{value: size as i32}, val_type: IntType},
+                    _ => {
+                        error("Invalid argument type for \"len\"", exp);
+                        Value{value: Val::IntValue{value: -1}, val_type: IntType}
+                    }
+                }
+            }
             _ => Value{value: Val::Error, val_type: UnknownType}
         }
     }
@@ -211,6 +248,45 @@ impl Builtin {
             },
             _ => error("Invalid function type for \"filter\"", exp)
         }
+    }
+
+    fn foldl(&self, args: Vec<Value>, exp: &Exp, interpreter: Interpreter) -> Value {
+        let mut acc = args[0].clone();
+        let list = &args[1];
+        let func_value = &args[2];
+        match (list.val_type.clone(), func_value.val_type.clone()) {
+            (ListType{list_type}, FuncType{param_types, return_type}) => {
+                type_conforms(&acc.val_type, &list_type, &exp.token);
+                type_conforms(&acc.val_type, &param_types[0], &exp.token);
+                type_conforms(&list_type, &param_types[1], &exp.token);
+                let fold_type = type_conforms(&list_type, &return_type, &exp.token);
+                match list.value.clone() {
+                    Val::ListValue{values} => {
+                        values.iter().for_each(|v: &Value| {
+                            acc = match func_value.value.clone() {
+                                Val::FuncValue{builtin_ident, parameters, body, env} => {
+                                    let mut temp_body_env = env.clone();
+                                    temp_body_env.insert(parameters[0].0.clone(), acc.clone());
+                                    temp_body_env.insert(parameters[1].0.clone(), v.clone());
+                                    match builtin_ident {
+                                        Some(bi) => self.interpret(bi.clone(), &mut temp_body_env, &body, interpreter.clone()),
+                                        _ => interpreter.clone().interpret(&body, &mut temp_body_env, &return_type)
+                                    }
+                                },
+                                _ => error("Invalid function type for \"foldl\"", exp)
+                            }
+                        });
+                        acc
+                    },
+                    _ => error("Invalid list type for \"foldl\"", exp)
+                }
+            },
+            _ => error("Invalid list or function types for \"foldl\"", exp)
+        }
+    }
+
+    fn foldr(&self, args: Vec<Value>, exp: &Exp, interpreter: Interpreter) -> Value {
+        null_val()
     }
 
     fn zip(&self, args: Vec<Value>, exp: &Exp) -> Value {

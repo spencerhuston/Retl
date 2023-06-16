@@ -35,11 +35,10 @@ FEATURES:
 - output stdout (DONE)
 - map (DONE)
 - filter (DONE)
-- zip (TODO)
+- zip (DONE)
 - foldl (TODO)
 - foldr (TODO)
-- foreach (TODO)
-- len (TODO)
+- len (DONE)
 - type (DONE)
 7. collection operators
 - list append operator: ++ (DONE)

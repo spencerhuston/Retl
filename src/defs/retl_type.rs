@@ -114,19 +114,6 @@ pub fn type_conforms_no_error(t1: &Type, t2: &Type, token: &Token) -> Type {
     }
 }
 
-pub fn concat_tuple_types(left: &Value, right: &Value) -> Vec<Type> {
-    match (left.val_type.clone(), right.val_type.clone()) {
-        (Type::TupleType{tuple_types: tt1}, Type::TupleType{tuple_types: tt2}) => {
-            tt1.clone().append(&mut tt2.clone());
-            tt1
-        },
-        _ => {
-            // TODO: Throw error here, invalid types for operand
-            vec![Type::UnknownType]
-        }
-    }
-}
-
 fn type_list_as_string(ts: &Vec<Type>) -> String {
     let mut type_str = String::from("");
     for i in 0..ts.len() - 1 {

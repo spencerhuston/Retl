@@ -1,4 +1,7 @@
-iter (0..3
-      |> map(|x: int| -> int { x * 2 })
-      |> filter(|x: int| -> bool { x % 2 == 0 }))
-{ println(__elem) }
+let z: list[tuple[int, char]] = zip(0..2, ['a', 'b', 'c']);
+println(type(z));
+iter (z) {
+    println(__elem.0);
+    println(__elem.1);
+    println("")
+}

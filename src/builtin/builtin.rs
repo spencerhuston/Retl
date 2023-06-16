@@ -63,6 +63,36 @@ fn value_to_string(val: &Val) -> Option<String> { // TODO - Collection types
 }
 
 impl Builtin {
+    pub fn init() -> Builtin {
+        let mut builtins = HashMap::new();
+        builtins.insert("readln".to_string(), BuiltinMeta { params: vec![], return_type: StringType });
+        builtins.insert("println".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
+        builtins.insert("print".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
+        builtins.insert("map".to_string(), BuiltinMeta { params: vec![
+            ("l".to_string(), ListType{list_type: Box::new(Any)}),
+            ("f".to_string(), FuncType{param_types: vec![Any], return_type: Box::new(Any)})
+        ], return_type: Any });
+        builtins.insert("filter".to_string(), BuiltinMeta { params: vec![
+            ("l".to_string(), ListType{list_type: Box::new(Any)}),
+            ("f".to_string(), FuncType{param_types: vec![Any], return_type: Box::new(Any)})
+        ], return_type: Any });
+        builtins.insert("zip".to_string(), BuiltinMeta { params: vec![
+            ("l1".to_string(), ListType{list_type: Box::new(Any)}),
+            ("l2".to_string(), ListType{list_type: Box::new(Any)})
+        ], return_type: ListType{list_type: Box::new(TupleType{tuple_types: vec![Any, Any]})} });
+        builtins.insert("type".to_string(), BuiltinMeta { params: vec![("val".to_string(), UnknownType)], return_type: StringType });
+        Builtin{builtins}
+    }
+
+    pub fn load_builtins(&self, env: &Env) -> Env {
+        let mut builtin_env = env.clone();
+        self.builtins.keys().for_each(|k: &String| {
+            let b = self.builtins.get(k).unwrap();
+            builtin_env.insert(k.clone(), func_value(k, b.params.clone(), b.return_type.clone()));
+        });
+        builtin_env
+    }
+
     fn get_meta(&self, ident: Keyword, env: &Env) -> (Vec<Value>, Type) {
         match self.builtins.get(&*ident.to_string()) {
             Some(bm) => {
@@ -111,6 +141,7 @@ impl Builtin {
             },
             Keyword::Map => self.map(args, exp, interpreter),
             Keyword::Filter => self.filter(args, exp, interpreter),
+            Keyword::Zip => self.zip(args, exp),
             Keyword::Type => {
                 Value{value: Val::StringValue{value: args[0].val_type.as_string()}, val_type: StringType}
             },
@@ -182,29 +213,47 @@ impl Builtin {
         }
     }
 
-    pub fn init() -> Builtin {
-        let mut builtins = HashMap::new();
-        builtins.insert("readln".to_string(), BuiltinMeta { params: vec![], return_type: StringType });
-        builtins.insert("println".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
-        builtins.insert("print".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
-        builtins.insert("map".to_string(), BuiltinMeta { params: vec![
-            ("c".to_string(), Any),
-            ("f".to_string(), FuncType{param_types: vec![Any], return_type: Box::new(Any)})
-        ], return_type: Any });
-        builtins.insert("filter".to_string(), BuiltinMeta { params: vec![
-            ("c".to_string(), Any),
-            ("f".to_string(), FuncType{param_types: vec![Any], return_type: Box::new(Any)})
-        ], return_type: Any });
-        builtins.insert("type".to_string(), BuiltinMeta { params: vec![("val".to_string(), UnknownType)], return_type: StringType });
-        Builtin{builtins}
-    }
+    fn zip(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        let (list1, list1_type) = match &args[0] {
+            Value{
+                value: Val::ListValue{values},
+                val_type: ListType{list_type}
+            } => (Some(values), *list_type.clone()),
+            _ => (None, UnknownType)
+        };
+        let (list2, list2_type) = match &args[1] {
+            Value{
+                value: Val::ListValue{values},
+                val_type: ListType{list_type}
+            } => (Some(values), *list_type.clone()),
+            _ => (None, UnknownType)
+        };
+        let error_list = Value{
+            value: Val::ListValue{values: vec![]},
+            val_type: ListType{list_type: Box::new(NullType)}
+        };
 
-    pub fn load_builtins(&self, env: &Env) -> Env {
-        let mut builtin_env = env.clone();
-        self.builtins.keys().for_each(|k: &String| {
-            let b = self.builtins.get(k).unwrap();
-            builtin_env.insert(k.clone(), func_value(k, b.params.clone(), b.return_type.clone()));
-        });
-        builtin_env
+        match (list1, list2) {
+            (Some(l1), Some(l2)) => {
+                if l1.len() == l2.len() {
+                    let tuple_type = TupleType{tuple_types: vec![list1_type.clone(), list2_type.clone()]};
+                    let mut zipped_values: Vec<Value> = vec![];
+                    l1.iter().zip(l2.iter()).for_each(|v: (&Value, &Value)| {
+                        zipped_values.push(Value{
+                            value: Val::TupleValue{values: vec![v.0.clone(), v.1.clone()]},
+                            val_type: tuple_type.clone()
+                        })
+                    });
+                    Value{
+                        value: Val::ListValue{values: zipped_values},
+                        val_type: ListType{list_type: Box::new(tuple_type)}
+                    }
+                } else {
+                    error("Different sized lists provided for \"zip\"", exp);
+                    error_list
+                }
+            },
+            _ => error_list
+        }
     }
 }

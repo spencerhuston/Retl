@@ -3,6 +3,7 @@ TODO:
 - Ending type-info
 - Fix "not" logic so parentheses not required
 - Extend map and filter to dictionary type
+- Print collection types
 - Clean up TODO's
 
 

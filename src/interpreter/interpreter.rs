@@ -7,6 +7,7 @@ use crate::defs::retl_type::Type;
 use crate::interpreter::value::{Value, Env, Val};
 use crate::scanner::token::get_fp_from_token;
 
+#[derive(Clone)]
 pub struct Interpreter {
     pub error: bool,
     builtin: Builtin
@@ -199,17 +200,18 @@ impl Interpreter {
                         } else {
                             match ident_value.val_type {
                                 Type::FuncType{return_type, ..} => {
-                                    type_conforms(&*return_type, expected_type, &exp.token);
                                     let mut body_env = env.clone();
                                     parameters.iter().zip(args)
                                         .for_each(|pa| {
                                             let arg_value = self.interpret(&pa.1.clone(), app_env, &pa.0.1);
                                             body_env.insert(pa.0.0.clone(), arg_value);
                                         });
-                                    match builtin_ident {
-                                        Some(ident) => self.builtin.interpret(ident.clone(), &mut body_env, exp),
+                                    let result = match builtin_ident {
+                                        Some(ident) => self.builtin.interpret(ident.clone(), &mut body_env, exp, self.clone()),
                                         _ => self.interpret(&body, &mut body_env, &*return_type)
-                                    }
+                                    };
+                                    type_conforms(&result.val_type, expected_type, &exp.token);
+                                    result
                                 },
                                 _ => invalid_exp_error(exp)
                             }

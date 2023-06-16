@@ -1,2 +1,4 @@
-let a = 5;
-a
+iter (0..3
+      |> map(|x: int| -> int { x * 2 })
+      |> filter(|x: int| -> bool { x % 2 == 0 }))
+{ println(__elem) }

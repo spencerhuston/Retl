@@ -2,15 +2,13 @@ TODO:
 - Implement builtin functions
 - Ending type-info
 - Fix "not" logic so parentheses not required
+- Extend map and filter to dictionary type
 - Clean up TODO's
 
 
 Possible features?
-- Parallel keyword
 - Tuple deconstruction
 - lazy evaluation
-- string interpolation
-- as keyword
 - List slicing
 
 
@@ -33,9 +31,9 @@ FEATURES:
 - read stdin (DONE)
 - read csv (TODO)
 - output csv (TODO)
-- output stdout (TODO)
-- map (TODO)
-- filter (TODO)
+- output stdout (DONE)
+- map (DONE)
+- filter (DONE)
 - zip (TODO)
 - foldl (TODO)
 - foldr (TODO)

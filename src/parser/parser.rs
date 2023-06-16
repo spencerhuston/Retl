@@ -999,6 +999,16 @@ impl Parser {
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Char) => CharType,
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::String) => StringType,
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Null) => NullType,
+            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Union) => {
+                self.match_required_delimiter(Delimiter::BracketLeft);
+                let mut union_types = vec![self.parse_type()];
+
+                while self.match_optional_delimiter(Delimiter::Comma) {
+                    union_types.push(self.parse_type())
+                }
+                self.match_optional_delimiter(Delimiter::BracketRight);
+                UnionType{union_types}
+            },
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::List) => {
                 self.match_required_delimiter(Delimiter::BracketLeft);
                 let list_type = self.parse_type();

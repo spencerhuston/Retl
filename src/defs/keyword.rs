@@ -17,6 +17,8 @@ pub enum Keyword {
     String,
     #[strum(serialize = "null")]
     Null,
+    #[strum(serialize = "union")]
+    Union,
     #[strum(serialize = "list")]
     List,
     #[strum(serialize = "dict")]

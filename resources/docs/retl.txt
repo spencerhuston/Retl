@@ -1,9 +1,8 @@
 TODO:
-- Implement builtin functions
-- Ending type-info
-- Fix "not" logic so parentheses not required
-- Extend map and filter to dictionary type
 - Print collection types
+- Implement builtin functions
+- Fix "not" logic so parentheses not required
+- Extend map and filter to dictionary type?
 - Clean up TODO's
 
 
@@ -17,11 +16,10 @@ FEATURES:
 1. lambdas only (DONE)
 2. basic arithmetic (DONE)
 3. ints, strings, chars, bools, lists, dicts, tuples, schemas (DONE)
-- type inference (DONE)
+- type-inference (DONE)
 - type-aliasing (DONE)
 - range operator .. (DONE)
 - string indexing (DONE)
-- list slicing: l[x..y] (TODO)
 4. basic pattern matching (DONE)
 - match by type: {name}: {type}
 - multi-choice: |
@@ -36,8 +34,8 @@ FEATURES:
 - map (DONE)
 - filter (DONE)
 - zip (DONE)
-- foldl (TODO)
-- foldr (TODO)
+- foldl (DONE)
+- foldr (DONE)
 - len (DONE)
 - type (DONE)
 7. collection operators

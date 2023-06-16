@@ -1,7 +1,7 @@
 use log::{error, trace};
 use strum_macros::Display;
 use crate::scanner::token::{Token, get_fp_from_token};
-use crate::Value;
+use crate::Type::UnknownType;
 
 #[derive(Display, Debug, Clone, PartialEq, Eq, Hash)]
 pub enum Type {
@@ -10,6 +10,7 @@ pub enum Type {
     CharType,
     StringType,
     NullType,
+    UnionType{union_types: Vec<Type>},
     ListType{list_type: Box<Type>},
     TupleType{tuple_types: Vec<Type>},
     DictType{key_type: Box<Type>, value_type: Box<Type>},
@@ -21,6 +22,13 @@ pub enum Type {
 
 fn well_formed(t: &Type, token: &Token) -> Type {
     match t {
+        Type::UnionType{union_types} => {
+            let mut uts: Vec<Type> = vec![];
+            for ut in union_types.iter() {
+                uts.push(well_formed(&ut, token))
+            }
+            Type::UnionType{union_types: uts}
+        },
         Type::ListType{list_type} => Type::ListType{
             list_type: Box::new(well_formed(&**list_type, token))
         },
@@ -56,6 +64,36 @@ fn _type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
     trace!("t1: {:?}, t2: {:?}, token: {:?}", t1, t2, token);
     match (t1, t2) {
         (_, _) if t1 == t2 => well_formed(t1, token),
+        (Type::UnionType{union_types: uts1}, Type::UnionType{union_types: uts2})
+        if !uts1.is_empty() && !uts2.is_empty() && uts1.len() == uts2.len() => {
+            let mut uts: Vec<Type> = vec![];
+            for (ut1, ut2) in uts1.iter().zip(uts2) {
+                uts.push(type_conforms(ut1, ut2, token))
+            }
+            Type::UnionType{union_types: uts}
+        },
+        (Type::UnionType{union_types: uts}, _) => {
+            match uts.iter().find(|ut| -> bool {
+                match type_conforms_no_error(ut, t2, token) {
+                    UnknownType => false,
+                    _ => true
+                }
+            }) {
+                Some(t) => t.clone(),
+                _ => UnknownType
+            }
+        },
+        (_, Type::UnionType{union_types: uts}) => {
+            match uts.iter().find(|ut| -> bool {
+                match type_conforms_no_error(ut, t1, token) {
+                    UnknownType => false,
+                    _ => true
+                }
+            }) {
+                Some(t) => t.clone(),
+                _ => UnknownType
+            }
+        },
         (Type::ListType{list_type: l1}, Type::ListType{list_type: l2}) => {
             Type::ListType{list_type: Box::new(type_conforms(&**l1, &**l2, token))}
         },
@@ -131,6 +169,9 @@ impl Type {
             Type::CharType => String::from("char"),
             Type::StringType => String::from("string"),
             Type::NullType => String::from("null"),
+            Type::UnionType{union_types} => {
+                "union[".to_owned() + &*type_list_as_string(&union_types) + "]"
+            },
             Type::ListType{list_type } => {
                 "list[".to_owned() + &list_type.clone().as_string() + "]"
             },

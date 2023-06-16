@@ -1,3 +1,2 @@
-println(foldr("", ['a', 'b', 'c'], |acc: string, c: char| -> string {
-    acc + c
-}))
+let a: union[int, string] = 'a';
+println(a)

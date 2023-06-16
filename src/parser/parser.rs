@@ -69,7 +69,10 @@ impl Parser {
         Exp{
             exp: Expression::Empty,
             exp_type: NullType,
-            token: self.curr().unwrap()
+            token: match self.curr() {
+                Some(t) => t,
+                _ => make_empty_token()
+            }
         }
     }
 
@@ -742,7 +745,7 @@ impl Parser {
                 exp: Expression::DictDef{mapping},
                 exp_type: DictType{
                     key_type: Box::new(first_element.exp_type.clone()),
-                    value_type: Box::new(first_value.exp_type.clone())
+                    value_type: Box::new(Any)
                 },
                 token
             }

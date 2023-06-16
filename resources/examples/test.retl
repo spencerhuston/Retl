@@ -1,2 +1,16 @@
-let a: union[int, string] = 'a';
-println(a)
+let test_csv: dict[string: union[list[int], list[string]]] = [
+    "col1": [0, 1, 2],
+    "col2": ["a", "b", "c"]
+];
+
+let zipped_cols = zip(test_csv("col1"), test_csv("col2"));
+let zipped_filter_cols = filter(zipped_cols, |row: tuple[int, string]| -> bool {
+    row.0 % 2 == 0
+});
+let zipped_mapped_cols = map(zipped_filter_cols, |row: tuple[int, string]| -> string {
+    row.1
+});
+
+iter (zipped_mapped_cols) {
+    println(__elem)
+}

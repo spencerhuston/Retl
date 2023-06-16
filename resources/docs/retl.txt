@@ -15,7 +15,7 @@ Possible features?
 FEATURES:
 1. lambdas only (DONE)
 2. basic arithmetic (DONE)
-3. ints, strings, chars, bools, lists, dicts, tuples, schemas (DONE)
+3. ints, strings, chars, bools, nulls, unions, lists, dicts, tuples, schemas (DONE)
 - type-inference (DONE)
 - type-aliasing (DONE)
 - range operator .. (DONE)

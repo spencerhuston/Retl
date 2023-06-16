@@ -152,8 +152,8 @@ impl Builtin {
             },
             Keyword::Map => self.map(args, exp, interpreter),
             Keyword::Filter => self.filter(args, exp, interpreter),
-            Keyword::Foldl => self.foldl(args, exp, interpreter),
-            Keyword::Foldr => self.foldr(args, exp, interpreter),
+            Keyword::Foldl => self.fold(args, exp, interpreter, true),
+            Keyword::Foldr => self.fold(args, exp, interpreter, false),
             Keyword::Zip => self.zip(args, exp),
             Keyword::Type => {
                 Value{value: Val::StringValue{value: args[0].val_type.as_string()}, val_type: StringType}
@@ -250,19 +250,30 @@ impl Builtin {
         }
     }
 
-    fn foldl(&self, args: Vec<Value>, exp: &Exp, interpreter: Interpreter) -> Value {
+    fn fold(&self, args: Vec<Value>, exp: &Exp, interpreter: Interpreter, left: bool) -> Value {
         let mut acc = args[0].clone();
         let list = &args[1];
         let func_value = &args[2];
         match (list.val_type.clone(), func_value.val_type.clone()) {
             (ListType{list_type}, FuncType{param_types, return_type}) => {
-                type_conforms(&acc.val_type, &list_type, &exp.token);
-                type_conforms(&acc.val_type, &param_types[0], &exp.token);
-                type_conforms(&list_type, &param_types[1], &exp.token);
-                let fold_type = type_conforms(&list_type, &return_type, &exp.token);
+                match *list_type {
+                    CharType => { // char -> string edge-case
+                        type_conforms(&acc.val_type, &StringType, &exp.token);
+                        type_conforms(&param_types[0], &StringType, &exp.token);
+                        type_conforms(&list_type, &param_types[1], &exp.token);
+                        type_conforms(&return_type, &StringType, &exp.token)
+                    },
+                    _ => {
+                        type_conforms(&acc.val_type, &list_type, &exp.token);
+                        type_conforms(&acc.val_type, &param_types[0], &exp.token);
+                        type_conforms(&list_type, &param_types[1], &exp.token);
+                        type_conforms(&list_type, &return_type, &exp.token)
+                    }
+                };
+
                 match list.value.clone() {
                     Val::ListValue{values} => {
-                        values.iter().for_each(|v: &Value| {
+                        let mut fold_func = |v: &Value| {
                             acc = match func_value.value.clone() {
                                 Val::FuncValue{builtin_ident, parameters, body, env} => {
                                     let mut temp_body_env = env.clone();
@@ -275,7 +286,12 @@ impl Builtin {
                                 },
                                 _ => error("Invalid function type for \"foldl\"", exp)
                             }
-                        });
+                        };
+                        if left {
+                            values.iter().for_each(|v: &Value| fold_func(v))
+                        } else {
+                            values.iter().rev().for_each(|v: &Value| fold_func(v))
+                        }
                         acc
                     },
                     _ => error("Invalid list type for \"foldl\"", exp)
@@ -283,10 +299,6 @@ impl Builtin {
             },
             _ => error("Invalid list or function types for \"foldl\"", exp)
         }
-    }
-
-    fn foldr(&self, args: Vec<Value>, exp: &Exp, interpreter: Interpreter) -> Value {
-        null_val()
     }
 
     fn zip(&self, args: Vec<Value>, exp: &Exp) -> Value {

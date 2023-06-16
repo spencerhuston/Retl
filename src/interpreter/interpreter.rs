@@ -207,7 +207,7 @@ impl Interpreter {
                                             body_env.insert(pa.0.0.clone(), arg_value);
                                         });
                                     match builtin_ident {
-                                        Some(ident) => self.builtin.interpret(ident.clone(), &mut body_env),
+                                        Some(ident) => self.builtin.interpret(ident.clone(), &mut body_env, exp),
                                         _ => self.interpret(&body, &mut body_env, &*return_type)
                                     }
                                 },
@@ -358,7 +358,6 @@ impl Interpreter {
             Val::StringValue{value} => value.len(),
             Val::ListValue{values} => values.len(),
             Val::TupleValue{values} => values.len(),
-            Val::DictValue{values} => values.len(),
             _ => {
                 error("Invalid iterator", exp);
                 0

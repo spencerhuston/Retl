@@ -1,5 +1,6 @@
 use log::{debug, trace, error};
 use std::collections::HashMap;
+use substring::Substring;
 
 use crate::scanner::token::{Token, make_empty_token, get_fp_from_token};
 use crate::defs::keyword::Keyword;
@@ -239,6 +240,7 @@ impl Parser {
     }
 
     fn parse_expression(&mut self) -> Exp {
+        trace!("parse_expression");
         match self.curr() {
             Some(Token::Keyword{..})
                 if self.match_optional_keyword(Keyword::Let)
@@ -269,6 +271,7 @@ impl Parser {
     }
 
     fn parse_let(&mut self) -> Exp {
+        trace!("parse_let");
         let token = self.curr().unwrap();
         let ident = self.match_ident();
 
@@ -299,6 +302,7 @@ impl Parser {
     }
 
     fn parse_simple_expression(&mut self) -> Exp {
+        trace!("parse_simple_expression");
         match self.curr() {
             Some(Token::Keyword{..})
                 if self.match_optional_keyword(Keyword::If)
@@ -345,6 +349,7 @@ impl Parser {
     }
 
     fn parse_alias(&mut self) -> Exp {
+        trace!("parse_alias");
         let token = self.curr().unwrap();
         let ident = self.match_ident();
         self.match_required_delimiter(Delimiter::Assignment);
@@ -370,6 +375,7 @@ impl Parser {
     }
 
     fn parse_utight_with_min(&mut self, min: i32) -> Exp {
+        trace!("parse_utight_with_min");
         let token = self.curr().unwrap();
         let mut left = self.parse_utight();
         while self.is_binary_op(min) {
@@ -391,6 +397,7 @@ impl Parser {
     }
 
     fn parse_utight(&mut self) -> Exp {
+        trace!("parse_utight");
         let token = self.curr().unwrap();
         let mut operator: Option<Operator> = None;
         if self.match_optional_keyword(Keyword::Not) {
@@ -430,6 +437,7 @@ impl Parser {
     }
 
     fn parse_tight(&mut self) -> Exp {
+        trace!("parse_tight");
         match self.curr() {
             Some(Token::Delimiter{..})
                 if self.match_optional_delimiter(Delimiter::BracketLeft)
@@ -481,6 +489,7 @@ impl Parser {
     }
 
     fn parse_access_index(&mut self) -> i32 {
+        trace!("parse_access_index");
         let index = self.parse_literal();
         match index.exp {
             Expression::Lit{lit} => {
@@ -504,6 +513,7 @@ impl Parser {
     }
 
     fn parse_atom(&mut self) -> Exp {
+        trace!("parse_atom");
         match self.curr() {
             Some(Token::Ident{ident, fp: _}) => {
                 let reference = Exp{
@@ -551,6 +561,7 @@ impl Parser {
     }
 
     fn parse_literal(&mut self) -> Exp {
+        trace!("parse_literal");
         let token = self.curr().unwrap();
         match self.curr() {
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::True) => {
@@ -578,14 +589,22 @@ impl Parser {
                 if value.starts_with('\'') {
                     self.advance();
                     Exp{
-                        exp: Expression::Lit{lit: CharLit{literal: value}},
+                        exp: Expression::Lit{
+                            lit: CharLit{
+                                literal: value.substring(1, value.len() - 1).to_string()
+                            }
+                        },
                         exp_type: CharType,
                         token: token.clone()
                     }
                 } else if value.starts_with('\"') {
                     self.advance();
                     Exp{
-                        exp: Expression::Lit{lit: StringLit{literal: value}},
+                        exp: Expression::Lit{
+                            lit: StringLit{
+                                literal: value.substring(1, value.len() - 1).to_string()
+                            }
+                        },
                         exp_type: StringType,
                         token: token.clone()
                     }
@@ -624,6 +643,7 @@ impl Parser {
     }
 
     fn parse_branch(&mut self) -> Exp {
+        trace!("parse_branch");
         let token = self.curr().unwrap();
         self.match_required_delimiter(Delimiter::ParenLeft);
         let condition = self.parse_simple_expression();
@@ -656,6 +676,7 @@ impl Parser {
     }
 
     fn parse_iter(&mut self) -> Exp {
+        trace!("parse_iter");
         let token = self.curr().unwrap();
         self.match_required_delimiter(Delimiter::ParenLeft);
         let iter = self.parse_simple_expression();
@@ -675,6 +696,7 @@ impl Parser {
     }
 
     fn parse_collection_def(&mut self) -> Exp {
+        trace!("parse_collection_def");
         let token = self.curr().unwrap().clone();
         if self.match_optional_delimiter(Delimiter::BracketRight) {
             return Exp{
@@ -736,6 +758,7 @@ impl Parser {
     }
 
     fn parse_tuple_def_or_simple_expression(&mut self) -> Exp {
+        trace!("parse_tuple_def_or_simple_expression");
         let token= self.curr().unwrap().clone();
         let first_element = self.parse_simple_expression();
 
@@ -760,6 +783,7 @@ impl Parser {
     }
 
     fn parse_schema_def(&mut self) -> Exp {
+        trace!("parse_schema_def");
         let token = self.curr().unwrap().clone();
         self.match_required_delimiter(Delimiter::BraceLeft);
         let mut mapping: HashMap<String, Type> = HashMap::new();
@@ -780,6 +804,7 @@ impl Parser {
     }
 
     fn parse_pattern(&mut self) -> Pattern {
+        trace!("parse_pattern");
         match self.curr() {
             Some(Token::Ident{ident, fp: _}) if ident != "_" => { // type case
                 self.advance();
@@ -844,6 +869,7 @@ impl Parser {
     }
 
     fn parse_case(&mut self) -> Case {
+        trace!("parse_case");
         self.match_required_keyword(Keyword::Case);
         let pattern = self.parse_pattern();
         self.match_required_delimiter(Delimiter::CaseExp);
@@ -855,6 +881,7 @@ impl Parser {
     }
 
     fn parse_match(&mut self) -> Exp {
+        trace!("parse_match");
         let token = self.curr().unwrap().clone();
         let value = self.parse_atom();
         self.match_required_delimiter(Delimiter::BraceLeft);
@@ -875,6 +902,7 @@ impl Parser {
     }
 
     fn parse_parameter(&mut self) -> Parameter {
+        trace!("parse_parameter");
         let token = self.curr().unwrap().clone();
         let ident = self.match_ident();
         self.match_required_delimiter(Delimiter::DenoteType);
@@ -883,6 +911,7 @@ impl Parser {
     }
     
     fn parse_lambda(&mut self) -> Exp {
+        trace!("parse_lambda");
         let token = self.curr().unwrap().clone();
         let mut params: Vec<Parameter> = vec![];
         if !self.match_optional_delimiter(Delimiter::LambdaSig) {
@@ -919,6 +948,7 @@ impl Parser {
     }
 
     fn parse_arguments(&mut self) -> Vec<Exp> {
+        trace!("parse_arguments");
         let mut args: Vec<Exp> = vec![];
 
         if self.match_optional_delimiter(Delimiter::ParenRight) {
@@ -934,6 +964,7 @@ impl Parser {
     }
 
     fn parse_application(&mut self) -> Exp {
+        trace!("parse_application");
         let token = self.curr().unwrap().clone();
         let ident: Exp = self.parse_atom();
 
@@ -961,6 +992,7 @@ impl Parser {
     }
 
     fn parse_type(&mut self) -> Type {
+        trace!("parse_type");
         let first_type = match self.curr() {
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Int) => IntType,
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Bool) => BoolType,

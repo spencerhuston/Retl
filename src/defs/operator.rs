@@ -1,6 +1,6 @@
 use strum_macros::Display;
 use crate::{Exp, Type, Value};
-use crate::defs::retl_type::type_conforms;
+use crate::defs::retl_type::type_conforms_no_error;
 use crate::interpreter::interpreter::error;
 use crate::interpreter::value::Val;
 
@@ -84,7 +84,7 @@ impl Operator {
 
     pub fn get_type(&self, left: &mut Exp, right: &mut Exp) -> Type {
         match *self {
-            Operator::Plus => type_conforms(&left.exp_type, &right.exp_type, &left.token),
+            Operator::Plus => type_conforms_no_error(&left.exp_type, &right.exp_type, &left.token),
             Operator::Minus |
             Operator::Multiply |
             Operator::Divide |
@@ -97,7 +97,7 @@ impl Operator {
             Operator::Not |
             Operator::And |
             Operator::Or => Type::BoolType,
-            Operator::CollectionConcat => type_conforms(&left.exp_type, &right.exp_type, &left.token)
+            Operator::CollectionConcat => type_conforms_no_error(&left.exp_type, &right.exp_type, &left.token)
         }
     }
 

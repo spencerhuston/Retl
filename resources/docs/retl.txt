@@ -1,9 +1,7 @@
 TODO:
-- Iteration
 - Implement builtin functions
-- Fix error logging during interpreter phase
 - Ending type-info
-- Fix not logic so parentheses not required
+- Fix "not" logic so parentheses not required
 - Clean up TODO's
 
 
@@ -32,7 +30,7 @@ FEATURES:
 - predicates
 5. if/else (DONE)
 6. builtin-functions for ETL, functions passed in are denoted code-blocks:
-- read stdin (TODO)
+- read stdin (DONE)
 - read csv (TODO)
 - output csv (TODO)
 - output stdout (TODO)
@@ -43,6 +41,7 @@ FEATURES:
 - foldr (TODO)
 - foreach (TODO)
 - len (TODO)
+- type (DONE)
 7. collection operators
 - list append operator: ++ (DONE)
 - list/dict access operator: () (application) (DONE)
@@ -57,7 +56,7 @@ FEATURES:
     3. run new code
     4. add to env
 10. strong, dynamic typing (DONE)
-11. Iteration
+11. Iteration (DONE)
 
 Structure:
 ReplRunner

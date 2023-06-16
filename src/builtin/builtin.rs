@@ -8,6 +8,7 @@ use crate::defs::keyword::Keyword;
 use crate::Type;
 use crate::defs::retl_type::Type::*;
 use crate::interpreter::value::{Value, Env, Val};
+use crate::interpreter::interpreter::error;
 use crate::scanner::token::make_empty_token;
 
 fn null_val() -> Value {
@@ -50,6 +51,16 @@ pub struct Builtin {
     builtins: HashMap<String, BuiltinMeta>
 }
 
+fn value_to_string(val: &Val) -> Option<String> { // TODO - Collection types
+    match val {
+        Val::IntValue{value} => Some(value.to_string()),
+        Val::BoolValue{value} => Some(if *value { "true".to_string() } else { "false".to_string() }),
+        Val::CharValue{value} => Some(value.to_string()),
+        Val::StringValue{value} => Some(value.clone()),
+        _ => None
+    }
+}
+
 impl Builtin {
     fn get_meta(&self, ident: Keyword, env: &Env) -> (Vec<Value>, Type) {
         match self.builtins.get(&*ident.to_string()) {
@@ -66,7 +77,7 @@ impl Builtin {
         }
     }
 
-    pub fn interpret(&self, ident: Keyword, env: &Env) -> Value {
+    pub fn interpret(&self, ident: Keyword, env: &Env, exp: &Exp) -> Value {
         let (args, rt): (Vec<Value>, Type) = self.get_meta(ident.clone(), env);
 
         match ident {
@@ -76,12 +87,18 @@ impl Builtin {
                 Value{value: Val::StringValue{value: line}, val_type: rt}
             },
             Keyword::Println => {
-                println!("{}", match &args[0].value { // TODO: FIX OUTPUT
-                    Val::StringValue{value} => value.as_str(),
-                    _ => ""
-                });
-                let _ = io::stdout().flush();
-                null_val()
+                let str = value_to_string(&args[0].value);
+                match str {
+                    Some(str_val) => {
+                        println!("{}", str_val);
+                        let _ = io::stdout().flush();
+                        null_val()
+                    },
+                    _ => error("Invalid argument type for \"print\"", exp)
+                }
+            },
+            Keyword::Type => {
+                Value{value: Val::StringValue{value: args[0].val_type.as_string()}, val_type: StringType}
             },
             _ => Value{value: Val::Error, val_type: UnknownType}
         }
@@ -90,7 +107,8 @@ impl Builtin {
     pub fn init() -> Builtin {
         let mut builtins = HashMap::new();
         builtins.insert("readln".to_string(), BuiltinMeta { params: vec![], return_type: StringType });
-        builtins.insert("println".to_string(), BuiltinMeta { params: vec![("str".to_string(), StringType)], return_type: NullType });
+        builtins.insert("println".to_string(), BuiltinMeta { params: vec![("str".to_string(), UnknownType)], return_type: NullType });
+        builtins.insert("type".to_string(), BuiltinMeta { params: vec![("val".to_string(), UnknownType)], return_type: StringType });
         Builtin{builtins}
     }
 

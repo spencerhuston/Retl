@@ -89,7 +89,7 @@ fn run_retl(script: &String) -> Result<(), Box<dyn Error>> {
         trace!("INTERPRETER ERROR");
         Err("One more errors occurred, exiting.".into())
     } else {
-        println!("{:?}", result);
+        trace!("{:?}", result);
         Ok(())
     }
 }
@@ -122,7 +122,7 @@ fn run_retl_repl() -> Result<(), Box<dyn Error>> {
         } else {
             repl_input.push_str(&*line);
             let result = interpreter.interpret(&make_ast(&repl_input)?, &mut env, &Type::UnknownType);
-            println!("{:?}", result);
+            trace!("{:?}", result);
             repl_input.clear()
         }
     }

@@ -47,12 +47,7 @@ fn well_formed(t: &Type, token: &Token) -> Type {
                 return_type: Box::new(well_formed(&**return_type, token))
             }
         },
-        Type::UnknownType => {
-            error!("Unknown type: {}",
-                get_fp_from_token(&token));
-            // TODO - Throw Exception here
-            Type::UnknownType
-        },
+        Type::UnknownType => Type::UnknownType,
         _ => t.clone()
     }
 }
@@ -93,8 +88,8 @@ fn _type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
         },
         (_, Type::UnknownType) => well_formed(t1, token),
         (Type::UnknownType, _) => well_formed(t2, token),
-        (Type::Any, _) => Type::Any,
-        (_, Type::Any) => Type::Any,
+        (Type::Any, t) => well_formed(t, token),
+        (t, Type::Any) => well_formed(t, token),
         _ => Type::UnknownType
     }
 }
@@ -103,10 +98,9 @@ pub fn type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
     match _type_conforms(t1, t2, token) {
         ut@Type::UnknownType => {
             error!("Type mismatch, {:?} vs. {:?}: {}",
-            t1.as_string(),
-            t2.as_string(),
-            get_fp_from_token(&token));
-            // TODO - Throw panic here
+                t1.as_string(),
+                t2.as_string(),
+                get_fp_from_token(&token));
             ut
         },
         t@_ => t

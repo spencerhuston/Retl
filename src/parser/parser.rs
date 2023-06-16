@@ -8,7 +8,7 @@ use crate::defs::delimiter::Delimiter;
 use crate::defs::expression::{Exp, Expression, Literal, Parameter, Case, Pattern};
 use crate::defs::expression::Literal::*;
 use crate::defs::operator::Operator;
-use crate::defs::retl_type::Type;
+use crate::defs::retl_type::{Type, type_conforms_no_error};
 use crate::defs::retl_type::Type::*;
 
 pub struct Parser {
@@ -239,6 +239,13 @@ impl Parser {
     pub fn parse(&mut self, tokens: &Vec<Token>) {
         self.tokens = tokens.clone();
         self.root_exp = self.parse_expression();
+        match self.curr() {
+            Some(_) =>  {
+                error!("\';\' missing, rest of file cannot be parsed: {}",
+                    get_fp_from_token(&self.curr().unwrap()));
+            },
+            _ => ()
+        }
         debug!("ROOT EXPRESSION\n====================\n{:#?}\n====================\n", self.root_exp)
     }
 
@@ -385,8 +392,8 @@ impl Parser {
             let operator = self.curr().unwrap().clone().to_operator().unwrap();
             let temp_min = operator.get_precedence() + 1;
             self.advance();
-            let mut right = self.parse_utight_with_min(temp_min);
-            let operator_type = operator.clone().get_type(&mut left, &mut right);
+            let right = self.parse_utight_with_min(temp_min);
+            let operator_type = type_conforms_no_error(&left.exp_type, &right.exp_type, &token);
             left = Exp{
                 exp: Expression::Primitive{
                     operator,

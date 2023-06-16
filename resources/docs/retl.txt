@@ -2,8 +2,6 @@ TODO:
 - Print collection types
 - Implement builtin functions
 - Fix "not" logic so parentheses not required?
-- Extend map and filter to dictionary type?
-- Clean up TODO's
 
 
 Possible features?
@@ -53,6 +51,7 @@ FEATURES:
     4. add to env
 10. strong, dynamic typing (DONE)
 11. Iteration (DONE)
+12. Comments (DONE)
 
 Structure:
 ReplRunner
@@ -109,7 +108,7 @@ match
 case
 
 Readln
-readCSV
+read_csv
 writeCSV
 print
 println

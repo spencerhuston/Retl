@@ -1,20 +1,3 @@
-#test dictionary to check unions work
-let test_csv: dict[string: union[list[int], list[string]]] = [
-    "col1": [0, 1, 2],
-    "col2": ["a", "b", "c"] #ensure list[string] is allowed
-];
-
-#zip 1st and 2nd columns together
-let zipped_cols = zip(test_csv("col1"), test_csv("col2"));
-let zipped_filter_cols = filter(zipped_cols, |row: tuple[int, string]| -> bool {
-    row.0 % 2 == 0
-});
-#map rows to string values only
-let zipped_mapped_cols = map(zipped_filter_cols, |row: tuple[int, string]| -> string {
-    row.1
-});
-
-#iterate over final values
-iter (zipped_mapped_cols) {
-    println(__elem)
-}
+let a = [0, 1, 2];
+let b = [0, 1, 3];
+println(a != b)

@@ -35,8 +35,8 @@ pub enum Delimiter {
     LessThanEqualTo,
     #[strum(serialize = "==")]
     Equal,
-    #[strum(serialize = "!")]
-    Not,
+    #[strum(serialize = "!=")]
+    NotEqual,
     #[strum(serialize = "++")]
     ListConcat,
     #[strum(serialize = "|")]
@@ -80,6 +80,7 @@ impl Delimiter {
             Delimiter::GreaterThanEqualTo => Some(Operator::GreaterThanEqualTo),
             Delimiter::LessThanEqualTo => Some(Operator::LessThanEqualTo),
             Delimiter::Equal => Some(Operator::Equal),
+            Delimiter::NotEqual => Some(Operator::NotEqual),
             Delimiter::ListConcat => Some(Operator::CollectionConcat),
             _ => None
         }

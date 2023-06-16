@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 use std::str::FromStr;
+use clap::builder::Str;
 
 use crate::defs::expression::{Exp, Expression};
 use crate::defs::keyword::Keyword;
@@ -66,6 +67,17 @@ impl Builtin {
     pub fn init() -> Builtin {
         let mut builtins = HashMap::new();
         builtins.insert("readln".to_string(), BuiltinMeta { params: vec![], return_type: StringType });
+        builtins.insert("read_csv".to_string(), BuiltinMeta {
+            params: vec![
+                ("path".to_string(), StringType),
+                ("schema".to_string(), SchemaType),
+                ("header".to_string(), BoolType)
+            ],
+            return_type: DictType{
+                key_type: Box::new(StringType),
+                value_type: Box::new(Any)
+            }
+        });
         builtins.insert("println".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
         builtins.insert("print".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
         builtins.insert("map".to_string(), BuiltinMeta { params: vec![
@@ -128,6 +140,7 @@ impl Builtin {
                 io::stdin().read_line(&mut line).expect("Expected input");
                 Value{value: Val::StringValue{value: line}, val_type: rt}
             },
+            Keyword::ReadCSV => self.read_csv(args, exp),
             Keyword::Println => {
                 let str = value_to_string(&args[0].value);
                 match str {
@@ -184,6 +197,33 @@ impl Builtin {
             }
             _ => Value{value: Val::Error, val_type: UnknownType}
         }
+    }
+
+    fn read_csv(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        // let path = match &args[0].value {
+        //     Val::StringValue{value} => value,
+        //     _ => {
+        //         error("Invalid argument type for \"path\" in \"readCSV\"", exp);
+        //         "".to_string()
+        //     }
+        // };
+        // let schema_values = match &args[1].value {
+        //     Val::SchemaValue{values} => values,
+        //     _ => {
+        //         error("Invalid argument type for \"schema\" in \"readCSV\"", exp);
+        //         HashMap::new()
+        //     }
+        // };
+        // let header = match &args[2].value {
+        //     Val::BoolValue{value} => value,
+        //     _ => {
+        //         error("Invalid argument type for \"header\" in \"readCSV\"", exp);
+        //         false
+        //     }
+        // };
+
+
+        null_val()
     }
 
     fn map(&self, args: Vec<Value>, exp: &Exp, interpreter: Interpreter) -> Value {

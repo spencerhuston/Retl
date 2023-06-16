@@ -5,7 +5,7 @@ use crate::scanner::token::Token;
 use crate::defs::retl_type::Type;
 use crate::defs::operator::Operator;
 
-#[derive(Debug, Clone, Eq, PartialEq)] // TODO: Consolidate derivation order
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Exp {
     pub exp: Expression,
     pub exp_type: Type,

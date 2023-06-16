@@ -1,7 +1,7 @@
 TODO:
 - Print collection types
 - Implement builtin functions
-- Fix "not" logic so parentheses not required
+- Fix "not" logic so parentheses not required?
 - Extend map and filter to dictionary type?
 - Clean up TODO's
 

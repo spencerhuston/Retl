@@ -17,7 +17,7 @@ pub struct Scanner {
 }
 
 fn is_valid_character(c: &char, inside_quotes: &bool) -> bool {
-    *inside_quotes || c.is_alphanumeric() || c.is_whitespace() || *c == '_' || *c == '\'' || *c == '\"' || is_raw_delim(c, inside_quotes.borrow())
+    *inside_quotes || c.is_alphanumeric() || c.is_whitespace() || *c == '#' || *c == '_' || *c == '\'' || *c == '\"' || is_raw_delim(c, inside_quotes.borrow())
 }
 
 fn is_raw_delim(c: &char, inside_quotes: &bool) -> bool {
@@ -171,12 +171,13 @@ impl Scanner {
     }
 
     pub fn scan(&mut self, script: &String) {
-        debug!("SCRIPT\n====================\n{}\n====================\n", script);
+        debug!("SCRIPT\n====================\n{:?}\n====================\n", script);
 
         let lines = script.lines();
         let text: Vec<char> = script.chars().collect();
         let mut token = String::from("");
         let mut inside_quotes = false;
+        let mut in_comment = false;
         let file_pos = &mut FilePosition { line: 0, column: 0, line_text: String::from("") };
         let mut skip = false;
         
@@ -192,11 +193,18 @@ impl Scanner {
                 self.error = true;
                 error!("Invalid character \'{}\': {}", &c, file_pos.position());
                 continue;
-            } 
-            
-            update_file_pos(c, file_pos);
+            }
 
-            if is_whitespace(c, inside_quotes) {
+            update_file_pos(c, file_pos);
+            if c == '#' {
+                in_comment = true;
+                continue;
+            } else if in_comment && c != '\n' {
+                continue;
+            } else if in_comment && c == '\n' {
+                in_comment = false;
+                continue;
+            } else if is_whitespace(c, inside_quotes) {
                 self.push_non_delim_token(&mut token, &file_pos);
                 continue;
             } else if skip {

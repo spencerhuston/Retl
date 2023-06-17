@@ -1,6 +1,6 @@
 TODO:
+- Fix schema usage
 - Print collection types
-- Implement builtin functions
 
 
 Possible features?
@@ -26,7 +26,7 @@ FEATURES:
 6. builtin-functions for ETL, functions passed in are denoted code-blocks:
 - read stdin 
 - read csv 
-- output csv 
+- output csv (TODO)
 - output stdout 
 - map 
 - filter 

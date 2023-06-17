@@ -1,7 +1,21 @@
-#alias user_entry_table_type = list[tuple(string, string, int, string, string, string)];
-#let user_entry_table: user_entry_table_type = readCSV(
-#    "resources/examples/test.csv",
-#    ${first: string, last: string, age:int, email: string, guid: string, income: string},
-#    true
-#);
-#user_entry_table
+alias user_entry_row_type = tuple(string, string, int, string, string, string);
+alias user_entry_table_type = list[user_entry_row_type];
+
+let user_entry_schema: schema = ${first: string, last: string, age: int, email: string, guid: string, income: string};
+let path = "resources/examples/test.csv";
+println("Reading CSV: " + path);
+let user_entry_table: user_entry_table_type = readCSV(path, user_entry_schema);
+
+let filtered_user_table = user_entry_table
+    |> filter(|row: user_entry_row_type| -> bool {
+        let income: string = row.5;
+        let trimmed_income = stringToInt(income(1) + substr(income, 3, len(row.5) - 4));
+        trimmed_income > 5000
+    })
+    |> filter(|row: user_entry_row_type| -> bool {
+        row.2 < 30
+    });
+
+let path = "resources/examples/test_output.csv";
+println("Writing filtered CSV: " + path);
+writeCSV(path, filtered_user_table, user_entry_schema)

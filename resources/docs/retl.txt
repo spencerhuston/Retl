@@ -1,7 +1,6 @@
 TODO:
 - Print collection types
 - Implement builtin functions
-- Fix "not" logic so parentheses not required?
 
 
 Possible features?

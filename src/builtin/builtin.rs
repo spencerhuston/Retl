@@ -2,7 +2,6 @@ use std::collections::HashMap;
 use std::io;
 use std::io::Write;
 use std::str::FromStr;
-use clap::builder::Str;
 
 use crate::defs::expression::{Exp, Expression};
 use crate::defs::keyword::Keyword;
@@ -67,7 +66,7 @@ impl Builtin {
     pub fn init() -> Builtin {
         let mut builtins = HashMap::new();
         builtins.insert("readln".to_string(), BuiltinMeta { params: vec![], return_type: StringType });
-        builtins.insert("read_csv".to_string(), BuiltinMeta {
+        builtins.insert("readCSV".to_string(), BuiltinMeta {
             params: vec![
                 ("path".to_string(), StringType),
                 ("schema".to_string(), SchemaType),
@@ -77,6 +76,15 @@ impl Builtin {
                 key_type: Box::new(StringType),
                 value_type: Box::new(Any)
             }
+        });
+        builtins.insert("writeCSV".to_string(), BuiltinMeta {
+            params: vec![
+                ("path".to_string(), StringType),
+                ("schema".to_string(), SchemaType),
+                ("header".to_string(), BoolType),
+                ("overwrite".to_string(), BoolType)
+            ],
+            return_type: NullType
         });
         builtins.insert("println".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
         builtins.insert("print".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
@@ -141,6 +149,7 @@ impl Builtin {
                 Value{value: Val::StringValue{value: line}, val_type: rt}
             },
             Keyword::ReadCSV => self.read_csv(args, exp),
+            Keyword::WriteCSV => self.write_csv(args, exp),
             Keyword::Println => {
                 let str = value_to_string(&args[0].value);
                 match str {
@@ -199,30 +208,99 @@ impl Builtin {
         }
     }
 
+    fn convert_column_to_value(&self, column_type: &Type, element: &str, exp: &Exp) -> Value {
+        match column_type {
+            IntType => Value{
+                value: Val::IntValue{value: element.parse::<i32>().unwrap()},
+                val_type: IntType
+            },
+            BoolType => Value{
+                value: Val::BoolValue{value: if element == "true" { true } else { false }},
+                val_type: BoolType
+            },
+            CharType => Value{
+                value: Val::CharValue{value: element.to_string()},
+                val_type: CharType
+            },
+            StringType => Value{
+                value: Val::StringValue{value: element.to_string()},
+                val_type: StringType
+            },
+            _ => error("Cannot convert value to column type", exp)
+        }
+    }
+
     fn read_csv(&self, args: Vec<Value>, exp: &Exp) -> Value {
-        // let path = match &args[0].value {
-        //     Val::StringValue{value} => value,
-        //     _ => {
-        //         error("Invalid argument type for \"path\" in \"readCSV\"", exp);
-        //         "".to_string()
-        //     }
-        // };
-        // let schema_values = match &args[1].value {
-        //     Val::SchemaValue{values} => values,
-        //     _ => {
-        //         error("Invalid argument type for \"schema\" in \"readCSV\"", exp);
-        //         HashMap::new()
-        //     }
-        // };
-        // let header = match &args[2].value {
-        //     Val::BoolValue{value} => value,
-        //     _ => {
-        //         error("Invalid argument type for \"header\" in \"readCSV\"", exp);
-        //         false
-        //     }
-        // };
+        match &args[0].value {
+            Val::StringValue{value} => {
+                let path = value;
+                match &args[1].value {
+                    Val::SchemaValue{values} => {
+                        let schema = values;
+                        match &args[2].value {
+                            Val::BoolValue{value} => {
+                                let csv_reader = csv::ReaderBuilder::new()
+                                    .has_headers(*value)
+                                    .from_path(path);
+                                let mut column_values: Vec<Vec<Value>> = vec![vec![]; values.len()];
 
+                                for record in csv_reader.expect("Could not read CSV").records() {
+                                    match record {
+                                        Ok(row) => {
+                                            for (i, element) in row.iter().enumerate() {
+                                                match column_values.get(i) {
+                                                    Some(_) => {
+                                                        let column_type = schema.get(i).unwrap().1.clone();
+                                                        column_values[i].push(self.convert_column_to_value(&column_type, element, exp))
+                                                    },
+                                                    _ => {
+                                                        error("Schema does not match given CSV", exp);
+                                                        return null_val()
+                                                    }
+                                                };
+                                            }
+                                        },
+                                        _ => {
+                                            error("Could not read CSV row", exp);
+                                        }
+                                    }
+                                };
 
+                                let mut dict_values: Vec<(Value, Value)> = vec![];
+                                for (i, column_info) in schema.iter().enumerate() {
+                                    dict_values.push(
+                                        (Value{
+                                            value: Val::StringValue{value: column_info.0.clone()},
+                                            val_type: StringType
+                                        },
+                                        Value{
+                                            value: Val::ListValue{values: column_values[i].clone()},
+                                            val_type: ListType{list_type: Box::new(column_info.1.clone())}
+                                        })
+                                    )
+                                }
+
+                                Value{
+                                    value: Val::DictValue{values: dict_values},
+                                    val_type: DictType{
+                                        key_type: Box::new(StringType),
+                                        value_type: Box::new(UnionType{union_types: schema.iter().map(|col| {
+                                            ListType{list_type: Box::new(col.1.clone())}
+                                        }).collect()})
+                                    }
+                                }
+                            },
+                            _ => error("Invalid argument type for \"header\" in \"readCSV\"", exp)
+                        }
+                    },
+                    _ => error("Invalid argument type for \"schema\" in \"readCSV\"", exp)
+                }
+            },
+            _ => error("Invalid argument type for \"path\" in \"readCSV\"", exp)
+        }
+    }
+
+    fn write_csv(&self, args: Vec<Value>, exp: &Exp) -> Value {
         null_val()
     }
 

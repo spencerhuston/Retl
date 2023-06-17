@@ -23,7 +23,7 @@ pub enum Val {
     ListValue{values: Vec<Value>},
     TupleValue{values: Vec<Value>},
     DictValue{values: Vec<(Value, Value)>},
-    SchemaValue{values: HashMap<String, Type>},
+    SchemaValue{values: Vec<(String, Type)>},
     FuncValue{
         builtin_ident: Option<Keyword>,
         parameters: Vec<(String, Type)>,

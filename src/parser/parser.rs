@@ -796,14 +796,14 @@ impl Parser {
         trace!("parse_schema_def");
         let token = self.curr().unwrap().clone();
         self.match_required_delimiter(Delimiter::BraceLeft);
-        let mut mapping: HashMap<String, Type> = HashMap::new();
+        let mut mapping: Vec<(String, Type)> = vec![];
 
         while self.match_optional_delimiter(Delimiter::Comma) ||
             !self.match_optional_delimiter(Delimiter::BraceRight) {
             let ident = self.match_ident();
             self.match_required_delimiter(Delimiter::DenoteType);
             let col_type = self.parse_type();
-            mapping.insert(ident, col_type);
+            mapping.push((ident, col_type));
         }
 
         Exp {

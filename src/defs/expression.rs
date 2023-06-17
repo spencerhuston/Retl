@@ -59,6 +59,6 @@ pub enum Expression {
     TupleDef{values: Vec<Exp>},
     TupleAccess{ident: Box<Exp>, index: usize},
     DictDef{mapping: HashMap<Literal, Exp>},
-    SchemaDef{mapping: HashMap<String, Type>},
+    SchemaDef{mapping: Vec<(String, Type)>},
     Empty
 }

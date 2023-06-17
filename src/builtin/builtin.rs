@@ -79,10 +79,12 @@ impl Builtin {
         });
         builtins.insert("writeCSV".to_string(), BuiltinMeta {
             params: vec![
+                ("data".to_string(), DictType{
+                    key_type: Box::new(StringType),
+                    value_type: Box::new(Any)}),
                 ("path".to_string(), StringType),
                 ("schema".to_string(), SchemaType),
-                ("header".to_string(), BoolType),
-                ("overwrite".to_string(), BoolType)
+                ("header".to_string(), BoolType)
             ],
             return_type: NullType
         });
@@ -106,12 +108,19 @@ impl Builtin {
             ("l".to_string(), ListType{list_type: Box::new(Any)}),
             ("f".to_string(), FuncType{param_types: vec![Any, Any], return_type: Box::new(Any)})
         ], return_type: Any });
+        builtins.insert("slice".to_string(), BuiltinMeta { params: vec![
+            ("l".to_string(), ListType{list_type: Box::new(Any)}),
+            ("s".to_string(), IntType),
+            ("e".to_string(), IntType)
+        ], return_type: ListType{list_type: Box::new(Any)} });
         builtins.insert("zip".to_string(), BuiltinMeta { params: vec![
             ("l1".to_string(), ListType{list_type: Box::new(Any)}),
             ("l2".to_string(), ListType{list_type: Box::new(Any)})
         ], return_type: ListType{list_type: Box::new(TupleType{tuple_types: vec![Any, Any]})} });
         builtins.insert("len".to_string(), BuiltinMeta { params: vec![("c".to_string(), Any)], return_type: IntType });
         builtins.insert("type".to_string(), BuiltinMeta { params: vec![("v".to_string(), Any)], return_type: StringType });
+        builtins.insert("intToString".to_string(), BuiltinMeta { params: vec![("i".to_string(), IntType)], return_type: StringType });
+        builtins.insert("stringToInt".to_string(), BuiltinMeta { params: vec![("s".to_string(), StringType)], return_type: IntType });
         Builtin{builtins}
     }
 
@@ -176,6 +185,7 @@ impl Builtin {
             Keyword::Filter => self.filter(args, exp, interpreter),
             Keyword::Foldl => self.fold(args, exp, interpreter, true),
             Keyword::Foldr => self.fold(args, exp, interpreter, false),
+            Keyword::Slice => self.slice(args, exp),
             Keyword::Zip => self.zip(args, exp),
             Keyword::Type => {
                 Value{value: Val::StringValue{value: args[0].val_type.as_string()}, val_type: StringType}
@@ -203,19 +213,28 @@ impl Builtin {
                         Value{value: Val::IntValue{value: -1}, val_type: IntType}
                     }
                 }
-            }
+            },
+            Keyword::IntToString => self.int_to_string(args),
+            Keyword::StringToInt => self.string_to_int(args),
             _ => Value{value: Val::Error, val_type: UnknownType}
         }
     }
 
-    fn convert_column_to_value(&self, column_type: &Type, element: &str, exp: &Exp) -> Value {
+    fn column_entry_to_value(&self, column_type: &Type, element: &str, exp: &Exp) -> Value {
         match column_type {
             IntType => Value{
                 value: Val::IntValue{value: element.parse::<i32>().unwrap()},
                 val_type: IntType
             },
             BoolType => Value{
-                value: Val::BoolValue{value: if element == "true" { true } else { false }},
+                value: Val::BoolValue{value:
+                    if element == "true" { true }
+                    else if element == "false" { false }
+                    else {
+                        error("Invalid value for boolean column type", exp);
+                        false
+                    }
+                },
                 val_type: BoolType
             },
             CharType => Value{
@@ -251,7 +270,7 @@ impl Builtin {
                                                 match column_values.get(i) {
                                                     Some(_) => {
                                                         let column_type = schema.get(i).unwrap().1.clone();
-                                                        column_values[i].push(self.convert_column_to_value(&column_type, element, exp))
+                                                        column_values[i].push(self.column_entry_to_value(&column_type, element, exp))
                                                     },
                                                     _ => {
                                                         error("Schema does not match given CSV", exp);
@@ -265,30 +284,28 @@ impl Builtin {
                                         }
                                     }
                                 };
+                                null_val()
 
-                                let mut dict_values: Vec<(Value, Value)> = vec![];
-                                for (i, column_info) in schema.iter().enumerate() {
-                                    dict_values.push(
-                                        (Value{
-                                            value: Val::StringValue{value: column_info.0.clone()},
-                                            val_type: StringType
-                                        },
-                                        Value{
-                                            value: Val::ListValue{values: column_values[i].clone()},
-                                            val_type: ListType{list_type: Box::new(column_info.1.clone())}
-                                        })
-                                    )
-                                }
-
-                                Value{
-                                    value: Val::DictValue{values: dict_values},
-                                    val_type: DictType{
-                                        key_type: Box::new(StringType),
-                                        value_type: Box::new(UnionType{union_types: schema.iter().map(|col| {
-                                            ListType{list_type: Box::new(col.1.clone())}
-                                        }).collect()})
-                                    }
-                                }
+                                // let mut list_tuple_values: Vec<(Value, Value)> = vec![];
+                                // for (i, column_info) in schema.iter().enumerate() {
+                                //     dict_values.push(
+                                //         (Value{
+                                //             value: Val::StringValue{value: column_info.0.clone()},
+                                //             val_type: StringType
+                                //         },
+                                //         Value{
+                                //             value: Val::ListValue{values: column_values[i].clone()},
+                                //             val_type: ListType{list_type: Box::new(column_info.1.clone())}
+                                //         })
+                                //     )
+                                // }
+                                //
+                                // Value{
+                                //     value: Val::ListValue{values: list_tuple_values},
+                                //     val_type: ListType{
+                                //         list_type: TupleType{tuple_types: }
+                                //     }
+                                // }
                             },
                             _ => error("Invalid argument type for \"header\" in \"readCSV\"", exp)
                         }
@@ -300,8 +317,109 @@ impl Builtin {
         }
     }
 
+    fn value_to_row_entry(&self, val: &Value) -> String {
+        match val.value.clone() {
+            Val::IntValue{value} => value.to_string(),
+            Val::BoolValue{value} => if value { "true".to_string() } else { "false".to_string() },
+            Val::CharValue{value} => value,
+            Val::StringValue{value} => value,
+            _ => "".to_string()
+        }
+    }
+
     fn write_csv(&self, args: Vec<Value>, exp: &Exp) -> Value {
-        null_val()
+        let data = match &args[0].value {
+            Val::DictValue{values} => values,
+            _ => return null_val()
+        };
+        match &args[1].value {
+            Val::StringValue{value} => {
+                let path = value;
+                match &args[2].value {
+                    Val::SchemaValue{values} => {
+                        let schema = values;
+                        match &args[3].value {
+                            Val::BoolValue{value} => {
+                                let header = *value;
+                                let mut csv_writer = match csv::Writer::from_path(path) {
+                                    Ok(writer) => writer,
+                                    _ => {
+                                        error("Could not open CSV with given path", exp);
+                                        return null_val()
+                                    }
+                                };
+
+                                if data.len() != schema.len() {
+                                    error("Schema does not match given data for CSV write", exp);
+                                    return null_val()
+                                }
+
+                                schema.iter().for_each(|col: &(String, Type)| {
+                                    let column_name = col.0.clone();
+                                    let column_type = col.1.clone();
+                                    match data.iter().find(|v| {
+                                        match v.0.value.clone() {
+                                            Val::StringValue{value} => value == column_name,
+                                            _ => false
+                                        }
+                                    }) {
+                                        Some((_, dict_list)) => {
+                                            match &dict_list.val_type {
+                                                ListType{list_type} =>
+                                                    type_conforms(&list_type, &column_type, &exp.token),
+                                                _ => UnknownType
+                                            };
+                                        },
+                                        _ => {error("Schema does not match given data for CSV write", exp);}
+                                    }
+                                });
+
+                                let max_column_length = match data.iter().map(|dict_entry| {
+                                    match &dict_entry.1.value {
+                                        Val::ListValue{values} => values.len(),
+                                        _ => 0
+                                    }
+                                }).max() {
+                                    Some(max) => max,
+                                    _ => 0
+                                };
+
+                                if header {
+                                    let mut header_row: Vec<String> = vec![];
+                                    data.iter().for_each(|dict_entry: &(Value, Value)| {
+                                        match dict_entry.0.value.clone() {
+                                            Val::StringValue{value} => header_row.push(value),
+                                            _ => {}
+                                        };
+                                    });
+                                    csv_writer.write_record(&header_row).expect("Could not write header to CSV file");
+                                }
+
+                                for i in 0..max_column_length {
+                                    let mut row = vec![];
+                                    for de in data {
+                                        match &de.1.value {
+                                            Val::ListValue{values} => match values.get(i) {
+                                                Some(val) => row.push(self.value_to_row_entry(val)),
+                                                _ => row.push(self.value_to_row_entry(&null_val()))
+                                            },
+                                            _ => {}
+                                        }
+                                    };
+                                    csv_writer.write_record(&row).expect("Could not write row to CSV");
+                                }
+
+
+                                null_val()
+                            },
+                            _ => error("Invalid argument type for \"header\" in \"writeCSV\"", exp)
+                        }
+                    },
+                    _ => error("Invalid argument type for \"schema\" in \"writeCSV\"", exp)
+                }
+            },
+            _ => error("Invalid argument type for \"path\" in \"writeCSV\"", exp)
+        }
     }
 
     fn map(&self, args: Vec<Value>, exp: &Exp, interpreter: Interpreter) -> Value {
@@ -419,6 +537,36 @@ impl Builtin {
         }
     }
 
+    fn slice(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        let list = match &args[0].value {
+            Val::ListValue{values} => values.clone(),
+            _ => vec![]
+        };
+        let list_size = list.len();
+        let start_index = match &args[1].value {
+            Val::IntValue{value} => value.clone(),
+            _ => -1
+        };
+        let end_index = match &args[2].value {
+            Val::IntValue{value} => value.clone(),
+            _ => -1
+        };
+
+        if start_index < 0 {
+            error("Invalid start index for \"slice\", less than 0", exp);
+        } else if start_index > end_index {
+            error("Start index is greater than end index for \"slice\"", exp);
+        } else if end_index > list_size as i32 {
+            error("Invalid end index for \"slice\", greater than list size", exp);
+        }
+
+        let slice = list[start_index as usize..end_index as usize].to_vec();
+        Value{
+            value: Val::ListValue{values: slice},
+            val_type: args[0].val_type.clone()
+        }
+    }
+
     fn zip(&self, args: Vec<Value>, exp: &Exp) -> Value {
         let (list1, list1_type) = match &args[0] {
             Value{
@@ -460,6 +608,26 @@ impl Builtin {
                 }
             },
             _ => error_list
+        }
+    }
+
+    fn int_to_string(&self, args: Vec<Value>) -> Value {
+        Value{
+            value: Val::StringValue{value: match &args[0].value {
+                Val::IntValue{value} => value.to_string(),
+                _ => "".to_string()
+            }},
+            val_type: StringType
+        }
+    }
+
+    fn string_to_int(&self, args: Vec<Value>) -> Value {
+        Value{
+            value: Val::IntValue{value: match &args[0].value {
+                Val::StringValue{value} => value.parse::<i32>().unwrap(),
+                _ => -1
+            }},
+            val_type: IntType
         }
     }
 }

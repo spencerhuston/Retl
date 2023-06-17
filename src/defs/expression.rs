@@ -1,5 +1,4 @@
 use strum_macros::Display;
-use std::collections::HashMap;
 
 use crate::scanner::token::Token;
 use crate::defs::retl_type::Type;
@@ -58,7 +57,7 @@ pub enum Expression {
     ListDef{values: Vec<Exp>},
     TupleDef{values: Vec<Exp>},
     TupleAccess{ident: Box<Exp>, index: usize},
-    DictDef{mapping: HashMap<Literal, Exp>},
+    DictDef{mapping: Vec<(Literal, Exp)>},
     SchemaDef{mapping: Vec<(String, Type)>},
     Empty
 }

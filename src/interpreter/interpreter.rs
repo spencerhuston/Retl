@@ -487,16 +487,14 @@ impl Interpreter {
                     _ => (Type::UnknownType, Type::UnknownType)
                 };
                 let mut dict_values: Vec<(Value, Value)> = vec![];
-                let _ = mapping.keys()
-                    .for_each(|key: &Literal| {
-                        let hashmap_value = mapping[key].clone();
-                        let key_value = Exp {
-                            exp: Expression::Lit { lit: key.clone() },
+                let _ = mapping.iter().for_each(|value: &(Literal, Exp)| {
+                        let key = Exp {
+                            exp: Expression::Lit { lit: value.0.clone() },
                             exp_type: key_type.clone(),
                             token: exp.token.clone()
                         };
-                        dict_values.push((self.interpret(&key_value, env, &key_type.clone()),
-                                          self.interpret(&hashmap_value, env, &value_type.clone())));
+                        dict_values.push((self.interpret(&key, env, &key_type.clone()),
+                                          self.interpret(&value.1.clone(), env, &value_type.clone())));
                     });
                 Value{
                     value: Val::DictValue{values: dict_values},

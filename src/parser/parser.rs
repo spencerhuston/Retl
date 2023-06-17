@@ -735,17 +735,17 @@ impl Parser {
                 token
             }
         } else if self.match_optional_delimiter(Delimiter::DenoteType) {
-            let mut mapping: HashMap<Literal, Exp> = HashMap::new();
+            let mut mapping: Vec<(Literal, Exp)> = vec![];
             let first_key = self.get_exp_literal(first_element.clone());
             let first_value = self.parse_simple_expression();
-            mapping.insert(first_key, first_value.clone());
+            mapping.push((first_key, first_value.clone()));
 
             while self.match_optional_delimiter(Delimiter::Comma) {
                 let key_exp = self.parse_simple_expression();
                 let key = self.get_exp_literal(key_exp);
                 self.match_required_delimiter(Delimiter::DenoteType);
                 let value = self.parse_simple_expression();
-                mapping.insert(key, value);
+                mapping.push((key, value));
             }
             self.match_optional_delimiter(Delimiter::BracketRight);
             Exp{
@@ -1034,13 +1034,13 @@ impl Parser {
                 DictType{key_type: Box::new(key_type), value_type: Box::new(value_type)}
             },
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Tuple) => {
-                self.match_required_delimiter(Delimiter::BracketLeft);
+                self.match_required_delimiter(Delimiter::ParenLeft);
                 let mut tuple_types = vec![self.parse_type()];
 
                 while self.match_optional_delimiter(Delimiter::Comma) {
                     tuple_types.push(self.parse_type())
                 }
-                self.match_optional_delimiter(Delimiter::BracketRight);
+                self.match_optional_delimiter(Delimiter::ParenRight);
                 TupleType{tuple_types}
             },
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Schema) => SchemaType,

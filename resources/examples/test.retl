@@ -1,22 +1,7 @@
-#test dictionary to check unions work
-alias csv = dict[string: union[list[string], list[int]]];
-let test_csv: csv = readCSV(
-    "resources/examples/test.csv",
-    ${name: string, age: string},
-    true
-);
-
-#zip 1st and 2nd columns together
-let zipped_cols = zip(test_csv("name"), test_csv("age"));
-let zipped_filter_cols = filter(zipped_cols, |row: tuple[string, int]| -> bool {
-    row.1 % 2 == 0
-});
-#map rows to string values only
-let zipped_mapped_cols = map(zipped_filter_cols, |row: tuple[string, int]| -> string {
-    row.0
-});
-
-#iterate over final values
-iter (zipped_mapped_cols) {
-    println(__elem)
-}
+#alias user_entry_table_type = list[tuple(string, string, int, string, string, string)];
+#let user_entry_table: user_entry_table_type = readCSV(
+#    "resources/examples/test.csv",
+#    ${first: string, last: string, age:int, email: string, guid: string, income: string},
+#    true
+#);
+#user_entry_table

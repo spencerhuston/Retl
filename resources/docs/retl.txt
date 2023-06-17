@@ -10,36 +10,39 @@ Possible features?
 
 
 FEATURES:
-1. lambdas only (DONE)
-2. basic arithmetic (DONE)
-3. ints, strings, chars, bools, nulls, unions, lists, dicts, tuples, schemas (DONE)
-- type-inference (DONE)
-- type-aliasing (DONE)
-- range operator .. (DONE)
-- string indexing (DONE)
-4. basic pattern matching (DONE)
+1. lambdas only 
+2. basic arithmetic 
+3. ints, strings, chars, bools, nulls, unions, lists, dicts, tuples, schemas 
+- type-inference 
+- type-aliasing 
+- range operator .. 
+- string indexing 
+4. basic pattern matching 
 - match by type: {name}: {type}
 - multi-choice: |
 - range: ..
 - predicates
-5. if/else (DONE)
+5. if/else 
 6. builtin-functions for ETL, functions passed in are denoted code-blocks:
-- read stdin (DONE)
-- read csv (TODO)
-- output csv (TODO)
-- output stdout (DONE)
-- map (DONE)
-- filter (DONE)
-- zip (DONE)
-- foldl (DONE)
-- foldr (DONE)
-- len (DONE)
-- type (DONE)
+- read stdin 
+- read csv 
+- output csv 
+- output stdout 
+- map 
+- filter 
+- zip 
+- foldl
+- foldr
+- slice
+- len 
+- type
+- intToString
+- stringToInt
 7. collection operators
-- list append operator: ++ (DONE)
-- list/dict access operator: () (application) (DONE)
-- tuple access operator: . (DONE)
-8. REPL (DONE)
+- list append operator: ++ 
+- list/dict access operator: () (application) 
+- tuple access operator: . 
+8. REPL 
 - args:
      * retl <-d> => run the Retl REPL, optional debug mode
      * retl <-d> <-f> <file_name> => optional debug mode, run file
@@ -48,9 +51,9 @@ FEATURES:
     2. scan, parse, type check with environment from REPL
     3. run new code
     4. add to env
-10. strong, dynamic typing (DONE)
-11. Iteration (DONE)
-12. Comments (DONE)
+10. strong, dynamic typing 
+11. Iteration 
+12. Comments 
 
 Structure:
 ReplRunner

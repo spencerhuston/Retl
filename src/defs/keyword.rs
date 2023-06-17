@@ -67,10 +67,16 @@ pub enum Keyword {
     Foldl,
     #[strum(serialize = "foldr")]
     Foldr,
+    #[strum(serialize = "slice")]
+    Slice,
     #[strum(serialize = "len")]
     Len,
     #[strum(serialize = "type")]
-    Type
+    Type,
+    #[strum(serialize = "intToString")]
+    IntToString,
+    #[strum(serialize = "stringToInt")]
+    StringToInt
 }
 
 impl Keyword {
@@ -95,8 +101,11 @@ impl Keyword {
             Keyword::Zip |
             Keyword::Foldl |
             Keyword::Foldr |
+            Keyword::Slice |
             Keyword::Len |
-            Keyword::Type
+            Keyword::Type |
+            Keyword::IntToString |
+            Keyword::StringToInt
             => true,
             _ => false
         }

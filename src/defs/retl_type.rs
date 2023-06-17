@@ -210,7 +210,7 @@ impl Type {
                 "list[".to_owned() + &list_type.clone().as_string() + "]"
             },
             Type::TupleType{tuple_types} => {
-                "tuple[".to_owned() + &*type_list_as_string(&tuple_types) + "]"
+                "tuple(".to_owned() + &*type_list_as_string(&tuple_types) + ")"
             },
             Type::DictType{key_type, value_type} => {
                 "dict[".to_owned() + &key_type.clone().as_string() + ": " + &value_type.clone().as_string() + "]"

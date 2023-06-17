@@ -26,7 +26,7 @@ FEATURES:
 6. builtin-functions for ETL, functions passed in are denoted code-blocks:
 - read stdin 
 - read csv 
-- output csv (TODO)
+- output csv
 - output stdout 
 - map 
 - filter 

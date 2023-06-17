@@ -196,7 +196,7 @@ impl Scanner {
             }
 
             update_file_pos(c, file_pos);
-            if c == '#' {
+            if c == '#' && !inside_quotes {
                 in_comment = true;
                 continue;
             } else if in_comment && c != '\n' {

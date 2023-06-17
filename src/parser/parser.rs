@@ -659,13 +659,13 @@ impl Parser {
         let condition = self.parse_simple_expression();
         self.match_required_delimiter(Delimiter::ParenRight);
         self.match_required_delimiter(Delimiter::BraceLeft);
-        let if_branch = self.parse_simple_expression();
+        let if_branch = self.parse_expression();
         self.match_required_delimiter(Delimiter::BraceRight);
 
         let mut else_branch = None;
         if self.match_optional_keyword(Keyword::Else) {
             self.match_required_delimiter(Delimiter::BraceLeft);
-            else_branch = Some(self.parse_simple_expression());
+            else_branch = Some(self.parse_expression());
             self.match_required_delimiter(Delimiter::BraceRight);
         }
         let exp_type = if else_branch == None {

@@ -43,8 +43,8 @@
 <alias> ::= 'alias' <ident> '=' <type>
 
 <smp> ::= <utight>[<op><utight>]
-    | 'if' '('<smp>')' '{' <smp> '}' ['else' '{' <smp> '}']
-    | 'iter' '('<smp>')' '{' <smp> '}'
+    | 'if' '('<smp>')' '{' <exp> '}' ['else' '{' <exp> '}']
+    | 'iter' '('<smp>')' '{' <exp> '}'
     | <collection>['++' <tight>]
     | '('<smp>[','<smp>]')'
     | '$''{'<ident>':'<type>[','<ident>':'<type>]*'}'

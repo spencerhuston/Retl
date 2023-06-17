@@ -185,7 +185,7 @@ impl Builtin {
             },
             Keyword::Len => {
                 let size = match &args[0].value {
-                    Val::StringValue{value} => Some(value.len()),
+                    Val::StringValue{value} => Some(value.trim().chars().count()),
                     Val::ListValue{values} => {
                         type_conforms(&args[0].val_type, &ListType{list_type: Box::new(Any)}, &exp.token);
                         Some(values.len())

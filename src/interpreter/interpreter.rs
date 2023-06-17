@@ -429,8 +429,8 @@ impl Interpreter {
                         _ => Type::UnknownType
                     })
                 };
-                type_conforms(&expected_list_type, expected_type, &exp.token);
-                Value{value: Val::ListValue{values: list_values}, val_type: expected_list_type}
+                let final_list_type = type_conforms(&expected_list_type, expected_type, &exp.token);
+                Value{value: Val::ListValue{values: list_values}, val_type: final_list_type}
             },
             _ => invalid_exp_error(exp)
         }

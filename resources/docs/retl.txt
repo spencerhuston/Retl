@@ -6,14 +6,27 @@ TODO:
 
 
 TABLE-TYPE:
-- columns: list[string]
+- columns: list[string] (names only)
 - rows: list[tuple(...)]
 - funcs w/ table-types:
-    - collect(table) -> list[tuple(...)]: returns list of table rows
-    - show(table) -> string: returns table in string representation
-    - drop(table, col: string) -> table: Remove column from table
+    - createTable(data: list[tuple(...)], s: schema) -> table
+    - writeCSV(path: string, table: table, s: schema, header)
+    - readCSV(path: string, s: schema, header) -> table
     - join(table1, table2, func[any, any] -> bool) -> table: Inner join two tables
-    - select(cols: list[string]) -> table: Select columns
+    - with(table, col: name, values: list[any]) -> table:
+        Add column "name" with values, type is inferred, if used with existing column it replaces that one
+    - where(table, col: name, func[] -> bool) -> table:
+        ????
+    - select(table, cols: list[string]) -> table: Select columns
+    - drop(table, col: string) -> table: Remove column from table
+    - column(table, name: string) -> list[any]: Returns column as list of values
+    - collect(table) -> list[tuple(...)]: returns list of table rows
+    - count(table) -> int: Row count
+
+Example:
+let tbl: table = createTable([("john", 55), ("bob", 42)], ${name: string, age: int});
+let new_table = tbl |> with("retired", column(tbl, "age") |> map(|age: int| -> bool {age > 50}));
+writeCSV("output.csv", new_table, ${name: string, age: int, retired: bool}, true)
 
 
 Possible features?

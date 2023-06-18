@@ -1,6 +1,19 @@
 TODO:
-- Fix schema usage
+- Table type
+- Fix range pattern to use bounds checks and not construct ListDef expression
 - Print collection types
+- Extend range type to chars
+
+
+TABLE-TYPE:
+- columns: list[string]
+- rows: list[tuple(...)]
+- funcs w/ table-types:
+    - collect(table) -> list[tuple(...)]: returns list of table rows
+    - show(table) -> string: returns table in string representation
+    - drop(table, col: string) -> table: Remove column from table
+    - join(table1, table2, func[any, any] -> bool) -> table: Inner join two tables
+    - select(cols: list[string]) -> table: Select columns
 
 
 Possible features?

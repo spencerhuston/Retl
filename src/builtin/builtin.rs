@@ -101,6 +101,11 @@ impl Builtin {
             ("l".to_string(), ListType{list_type: Box::new(Any)}),
             ("f".to_string(), FuncType{param_types: vec![Any, Any], return_type: Box::new(Any)})
         ], return_type: Any });
+        builtins.insert("slice".to_string(), BuiltinMeta { params: vec![
+            ("l".to_string(), ListType{list_type: Box::new(Any)}),
+            ("s".to_string(), IntType),
+            ("e".to_string(), IntType)
+        ], return_type: ListType{list_type: Box::new(Any)}});
         builtins.insert("substr".to_string(), BuiltinMeta { params: vec![
             ("str".to_string(), StringType),
             ("s".to_string(), IntType),
@@ -178,6 +183,7 @@ impl Builtin {
             Keyword::Filter => self.filter(args, exp, interpreter),
             Keyword::Foldl => self.fold(args, exp, interpreter, true),
             Keyword::Foldr => self.fold(args, exp, interpreter, false),
+            Keyword::Slice => self.slice(args, exp),
             Keyword::Substr => self.substr(args, exp),
             Keyword::Zip => self.zip(args, exp),
             Keyword::Type => {
@@ -465,6 +471,36 @@ impl Builtin {
                 }
             },
             _ => error("Invalid list or function types for \"foldl\"", exp)
+        }
+    }
+
+    fn slice(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        let list = match &args[0].value {
+            Val::ListValue{values} => values.clone(),
+            _ => vec![]
+        };
+        let list_size = list.len();
+        let start_index = match &args[1].value {
+            Val::IntValue{value} => value.clone(),
+            _ => -1
+        };
+        let end_index = match &args[2].value {
+            Val::IntValue{value} => value.clone(),
+            _ => -1
+        };
+
+        if start_index < 0 {
+            error("Invalid start index for \"slice\", less than 0", exp);
+        } else if start_index > end_index {
+            error("Start index is greater than end index for \"slice\"", exp);
+        } else if end_index > list_size as i32 {
+            error("Invalid end index for \"slice\", greater than list size", exp);
+        }
+
+        let sub = &list[start_index as usize..end_index as usize].to_vec();
+        Value{
+            value: Val::ListValue{values: sub.clone() },
+            val_type: args[0].val_type.clone()
         }
     }
 

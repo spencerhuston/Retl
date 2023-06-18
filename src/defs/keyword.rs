@@ -67,6 +67,8 @@ pub enum Keyword {
     Foldl,
     #[strum(serialize = "foldr")]
     Foldr,
+    #[strum(serialize = "slice")]
+    Slice,
     #[strum(serialize = "substr")]
     Substr,
     #[strum(serialize = "len")]
@@ -101,6 +103,7 @@ impl Keyword {
             Keyword::Zip |
             Keyword::Foldl |
             Keyword::Foldr |
+            Keyword::Slice |
             Keyword::Substr |
             Keyword::Len |
             Keyword::Type |

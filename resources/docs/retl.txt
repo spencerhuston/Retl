@@ -1,5 +1,6 @@
 TODO:
 - Table type
+- Immediately return after error (w/o panic!)
 - Fix range pattern to use bounds checks and not construct ListDef expression
 - Print collection types
 - Extend range type to chars
@@ -12,11 +13,11 @@ TABLE-TYPE:
     - createTable(data: list[tuple(...)], s: schema) -> table
     - writeCSV(path: string, table: table, s: schema, header)
     - readCSV(path: string, s: schema, header) -> table
-    - join(table1, table2, func[any, any] -> bool) -> table: Inner join two tables
+    - join(table1, table2, ??????) -> table: Inner join two tables
     - with(table, col: name, values: list[any]) -> table:
         Add column "name" with values, type is inferred, if used with existing column it replaces that one
     - where(table, col: name, func[] -> bool) -> table:
-        ????
+        Filter rows out with condition, can reference individual values per row via __[table name]_[column name]
     - select(table, cols: list[string]) -> table: Select columns
     - drop(table, col: string) -> table: Remove column from table
     - column(table, name: string) -> list[any]: Returns column as list of values
@@ -26,8 +27,11 @@ TABLE-TYPE:
 Example:
 let tbl: table = createTable([("john", 55), ("bob", 42)], ${name: string, age: int});
 let new_table = tbl |> with("retired", column(tbl, "age") |> map(|age: int| -> bool {age > 50}));
+let filtered_table = new_table |> where(|| -> bool { __new_table_retired });
 writeCSV("output.csv", new_table, ${name: string, age: int, retired: bool}, true)
 
+
+join(tbl1, tbl1, || -> bool { }
 
 Possible features?
 - Tuple deconstruction

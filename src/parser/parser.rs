@@ -807,8 +807,8 @@ impl Parser {
         }
 
         Exp {
-            exp: Expression::SchemaDef{mapping},
-            exp_type: SchemaType,
+            exp: Expression::SchemaDef{mapping: mapping.clone()},
+            exp_type: SchemaType{col_types: mapping.iter().map(|col| { col.1.clone() }).collect()},
             token
         }
     }
@@ -1043,7 +1043,12 @@ impl Parser {
                 self.match_optional_delimiter(Delimiter::ParenRight);
                 TupleType{tuple_types}
             },
-            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Schema) => SchemaType,
+            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Schema) => {
+                SchemaType{ col_types: vec![] }
+            },
+            Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Table) => {
+                TableType{schema: Box::new(SchemaType{col_types: vec![]})}
+            },
             Some(Token::Delimiter{..}) if self.match_optional_delimiter(Delimiter::ParenLeft) => {
                 let mut param_types = vec![self.parse_type()];
                 while self.match_optional_delimiter(Delimiter::Comma) {

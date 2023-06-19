@@ -13,7 +13,8 @@ pub enum Type {
     ListType{list_type: Box<Type>},
     TupleType{tuple_types: Vec<Type>},
     DictType{key_type: Box<Type>, value_type: Box<Type>},
-    SchemaType,
+    SchemaType{col_types: Vec<Type>},
+    TableType{schema: Box<Type>},
     FuncType{param_types: Vec<Type>, return_type: Box<Type>},
     UnknownType,
     Any
@@ -54,6 +55,12 @@ fn well_formed(t: &Type) -> Type {
                 return_type: Box::new(well_formed(&**return_type))
             }
         },
+        Type::SchemaType{col_types} => {
+            Type::SchemaType{
+                col_types: col_types.iter().map(|col_type| { well_formed(col_type) }).collect()
+            }
+        },
+        Type::TableType{schema} => well_formed(&schema),
         Type::UnknownType => Type::UnknownType,
         _ => t.clone()
     }
@@ -125,6 +132,17 @@ fn _type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
                 return_type: Box::new(_type_conforms(r1, r2, token))
             }
         },
+        (Type::SchemaType{col_types: cols1}, Type::SchemaType{col_types: cols2}) => {
+            if cols1.is_empty() && !cols2.is_empty() { well_formed(&t2) }
+            else if !cols1.is_empty() && cols2.is_empty() { well_formed(&t1) }
+            else if cols1.is_empty() && cols2.is_empty() { Type::UnknownType }
+            else {
+                cols1.iter().zip(cols2.iter()).for_each(|cols| {
+                    _type_conforms(&cols.0, &cols.1, token);
+                });
+                t1.clone()
+            }
+        }
         (_, Type::UnknownType) => well_formed(t1),
         (Type::UnknownType, _) => well_formed(t2),
         _ => Type::UnknownType
@@ -188,6 +206,9 @@ pub fn type_conforms_no_error(t1: &Type, t2: &Type, token: &Token) -> Type {
 
 fn type_list_as_string(ts: &Vec<Type>) -> String {
     let mut type_str = String::from("");
+
+    if ts.is_empty() { return "".to_string() }
+
     for i in 0..ts.len() - 1 {
         type_str.push_str(&*(ts[i].as_string() + ","))
     }
@@ -215,7 +236,12 @@ impl Type {
             Type::DictType{key_type, value_type} => {
                 "dict[".to_owned() + &key_type.clone().as_string() + ": " + &value_type.clone().as_string() + "]"
             },
-            Type::SchemaType => String::from("schema"),
+            Type::SchemaType{col_types} => {
+                "schema{".to_owned() + &*type_list_as_string(&col_types) + "}"
+            },
+            Type::TableType{schema} => {
+                "table[".to_owned() + &schema.clone().as_string() + "]"
+            },
             Type::FuncType{param_types, return_type} => {
                 "lambda[".to_owned() + &*type_list_as_string(param_types) +
                     "->" + &return_type.clone().as_string() + "]"

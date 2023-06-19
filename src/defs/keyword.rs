@@ -27,6 +27,8 @@ pub enum Keyword {
     Tuple,
     #[strum(serialize = "schema")]
     Schema,
+    #[strum(serialize = "table")]
+    Table,
     #[strum(serialize = "true")]
     True,
     #[strum(serialize = "false")]

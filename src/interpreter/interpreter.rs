@@ -511,7 +511,10 @@ impl Interpreter {
             Expression::SchemaDef{mapping} => {
                 let schema_val = Value{
                     value: Val::SchemaValue{values: mapping.clone()},
-                    val_type: Type::SchemaType
+                    val_type: Type::SchemaType{col_types: match &exp.exp_type {
+                        Type::SchemaType{col_types} => col_types.clone(),
+                        _ => vec![]
+                    }}
                 };
                 type_conforms(&schema_val.val_type, expected_type, &exp.token);
                 schema_val

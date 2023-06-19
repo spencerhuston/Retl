@@ -12,8 +12,8 @@ let tables: list[user_entry_table_type] =
 
 let empty_list: user_entry_table_type = [];
 let combined_user_entry = foldl(empty_list, tables,
-                                |combined_table: user_entry_table_type, table: user_entry_table_type| -> user_entry_table_type {
-                                  combined_table ++ table
+                                |combined_table: user_entry_table_type, tbl: user_entry_table_type| -> user_entry_table_type {
+                                  combined_table ++ tbl
                                 });
 println("Combined table row count: " + intToString(len(combined_user_entry)));
 

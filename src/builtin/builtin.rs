@@ -69,7 +69,7 @@ impl Builtin {
         builtins.insert("readCSV".to_string(), BuiltinMeta {
             params: vec![
                 ("path".to_string(), StringType),
-                ("schema".to_string(), SchemaType)
+                ("schema".to_string(), Any)
             ],
             return_type: ListType{list_type: Box::new(Any)}
         });
@@ -77,7 +77,7 @@ impl Builtin {
             params: vec![
                 ("path".to_string(), StringType),
                 ("table".to_string(), ListType{list_type: Box::new(Any)}),
-                ("schema".to_string(), SchemaType)
+                ("schema".to_string(), Any)
             ],
             return_type: NullType
         });

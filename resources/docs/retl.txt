@@ -1,13 +1,15 @@
 TODO:
-- Table type
+- **Table type**
 - Immediately return after error (w/o panic!)
-- Fix range pattern to use bounds checks and not construct ListDef expression
 - Print collection types
+
+QOL:
+- Fix range pattern to use bounds checks and not construct ListDef expression
 - Extend range type to chars
 
 
 TABLE-TYPE:
-- columns: list[string] (names only)
+- columns: schema
 - rows: list[tuple(...)]
 - funcs w/ table-types:
     - createTable(data: list[tuple(...)], s: schema) -> table
@@ -31,7 +33,7 @@ let filtered_table = new_table |> where(|| -> bool { __new_table_retired });
 writeCSV("output.csv", new_table, ${name: string, age: int, retired: bool}, true)
 
 
-join(tbl1, tbl1, || -> bool { }
+join(tbl1, tbl2, || -> bool { __tbl1_col1 == __tbl2_col2 })
 
 Possible features?
 - Tuple deconstruction
@@ -42,7 +44,7 @@ Possible features?
 FEATURES:
 1. lambdas only 
 2. basic arithmetic 
-3. ints, strings, chars, bools, nulls, unions, lists, dicts, tuples, schemas 
+3. ints, strings, chars, bools, nulls, unions, lists, dicts, tuples, schemas, tables
 - type-inference 
 - type-aliasing 
 - range operator .. 
@@ -53,21 +55,36 @@ FEATURES:
 - range: ..
 - predicates
 5. if/else 
-6. builtin-functions for ETL, functions passed in are denoted code-blocks:
-- read stdin 
-- read csv 
-- output csv
-- output stdout 
-- map 
-- filter 
-- zip 
-- foldl
-- foldr
-- slice
-- len 
-- type
-- intToString
-- stringToInt
+6. built-in functions:
+General:
+    - read stdin
+    - read csv
+    - output csv
+    - output stdout
+    - map
+    - filter
+    - zip
+    - foldl
+    - foldr
+    - slice
+    - len
+    - type
+    - intToString
+    - stringToInt
+Table:
+    - createTable(data: list[tuple(...)], s: schema) -> table
+    - writeCSV(path: string, table: table, s: schema, header)
+    - readCSV(path: string, s: schema, header) -> table
+    - join(table1, table2, ??????) -> table: Inner join two tables
+    - with(table, col: name, values: list[any]) -> table:
+        Add column "name" with values, type is inferred, if used with existing column it replaces that one
+    - where(table, col: name, func[] -> bool) -> table:
+        Filter rows out with condition, can reference individual values per row via __[table name]_[column name]
+    - select(table, cols: list[string]) -> table: Select columns
+    - drop(table, col: string) -> table: Remove column from table
+    - column(table, name: string) -> list[any]: Returns column as list of values
+    - collect(table) -> list[tuple(...)]: returns list of table rows
+    - count(table) -> int: Row count
 7. collection operators
 - list append operator: ++ 
 - list/dict access operator: () (application) 

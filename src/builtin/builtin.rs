@@ -65,22 +65,9 @@ fn value_to_string(val: &Val) -> Option<String> { // TODO - Collection types
 impl Builtin {
     pub fn init() -> Builtin {
         let mut builtins = HashMap::new();
+
+        // General built-ins
         builtins.insert("readln".to_string(), BuiltinMeta { params: vec![], return_type: StringType });
-        builtins.insert("readCSV".to_string(), BuiltinMeta {
-            params: vec![
-                ("path".to_string(), StringType),
-                ("schema".to_string(), Any)
-            ],
-            return_type: ListType{list_type: Box::new(Any)}
-        });
-        builtins.insert("writeCSV".to_string(), BuiltinMeta {
-            params: vec![
-                ("path".to_string(), StringType),
-                ("table".to_string(), ListType{list_type: Box::new(Any)}),
-                ("schema".to_string(), Any)
-            ],
-            return_type: NullType
-        });
         builtins.insert("println".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
         builtins.insert("print".to_string(), BuiltinMeta { params: vec![("str".to_string(), Any)], return_type: NullType });
         builtins.insert("map".to_string(), BuiltinMeta { params: vec![
@@ -119,6 +106,50 @@ impl Builtin {
         builtins.insert("type".to_string(), BuiltinMeta { params: vec![("v".to_string(), Any)], return_type: StringType });
         builtins.insert("intToString".to_string(), BuiltinMeta { params: vec![("i".to_string(), IntType)], return_type: StringType });
         builtins.insert("stringToInt".to_string(), BuiltinMeta { params: vec![("s".to_string(), StringType)], return_type: IntType });
+
+        // Table built-ins
+        builtins.insert("createTable".to_string(), BuiltinMeta {
+            params: vec![
+                ("data".to_string(), ListType{list_type: Box::new(Any)}),
+                ("schema".to_string(), Any)
+            ],
+            return_type: TableType{schema: Box::new(Any)}
+        });
+        builtins.insert("readCSV".to_string(), BuiltinMeta { // TODO
+            params: vec![
+                ("path".to_string(), StringType),
+                ("schema".to_string(), Any)
+            ],
+            return_type: ListType{list_type: Box::new(Any)}
+        });
+        builtins.insert("writeCSV".to_string(), BuiltinMeta { // TODO
+            params: vec![
+                ("path".to_string(), StringType),
+                ("table".to_string(), ListType{list_type: Box::new(Any)}),
+                ("schema".to_string(), Any)
+            ],
+            return_type: NullType
+        });
+        builtins.insert("column".to_string(), BuiltinMeta {
+            params: vec![
+                ("tbl".to_string(), TableType{schema: Box::new(Any)}),
+                ("col".to_string(), StringType),
+            ],
+            return_type: ListType{list_type: Box::new(Any)}
+        });
+        builtins.insert("collect".to_string(), BuiltinMeta {
+            params: vec![
+                ("tbl".to_string(), TableType{schema: Box::new(Any)})
+            ],
+            return_type: ListType{list_type: Box::new(Any)}
+        });
+        builtins.insert("count".to_string(), BuiltinMeta {
+            params: vec![
+                ("tbl".to_string(), TableType{schema: Box::new(Any)}),
+            ],
+            return_type: IntType
+        });
+
         Builtin{builtins}
     }
 
@@ -155,8 +186,6 @@ impl Builtin {
                 io::stdin().read_line(&mut line).expect("Expected input");
                 Value{value: Val::StringValue{value: line}, val_type: rt}
             },
-            Keyword::ReadCSV => self.read_csv(args, exp),
-            Keyword::WriteCSV => self.write_csv(args, exp),
             Keyword::Println => {
                 let str = value_to_string(&args[0].value);
                 match str {
@@ -216,146 +245,13 @@ impl Builtin {
             },
             Keyword::IntToString => self.int_to_string(args),
             Keyword::StringToInt => self.string_to_int(args),
+            Keyword::CreateTable => self.create_table(args, exp),
+            Keyword::ReadCSV => self.read_csv(args, exp),
+            Keyword::WriteCSV => self.write_csv(args, exp),
+            Keyword::Column => self.column(args, exp),
+            Keyword::Collect => self.collect(args, exp),
+            Keyword::Count => self.count(args, exp),
             _ => Value{value: Val::Error, val_type: UnknownType}
-        }
-    }
-
-    fn row_entry_to_value(&self, column_type: &Type, element: &str, exp: &Exp) -> Value {
-        match column_type {
-            IntType => Value{
-                value: Val::IntValue{value: element.parse::<i32>().unwrap()},
-                val_type: IntType
-            },
-            BoolType => Value{
-                value: Val::BoolValue{value:
-                    if element == "true" { true }
-                    else if element == "false" { false }
-                    else {
-                        error("Invalid value for boolean column type", exp);
-                        false
-                    }
-                },
-                val_type: BoolType
-            },
-            CharType => Value{
-                value: Val::CharValue{value: element.to_string()},
-                val_type: CharType
-            },
-            StringType => Value{
-                value: Val::StringValue{value: element.to_string()},
-                val_type: StringType
-            },
-            _ => error("Cannot convert value to column type", exp)
-        }
-    }
-
-    fn read_csv(&self, args: Vec<Value>, exp: &Exp) -> Value {
-        match &args[0].value {
-            Val::StringValue{value} => {
-                let path = value;
-                match &args[1].value {
-                    Val::SchemaValue{values} => {
-                        let schema = values;
-                        let csv_reader = csv::ReaderBuilder::new()
-                            .has_headers(true)
-                            .from_path(path);
-                        let mut row_values: Vec<Vec<Value>> = vec![];
-
-                        for (row_index, record) in csv_reader.expect("Could not read CSV").records().enumerate() {
-                            row_values.push(vec![]);
-                            match record {
-                                Ok(row) => {
-                                    for (column_index, entry) in row.iter().enumerate() {
-                                        match row_values.get(row_index) {
-                                            Some(_) => {
-                                                let column_type = match schema.get(column_index) {
-                                                    Some(schema_column) => schema_column.1.clone(),
-                                                    _ => UnknownType
-                                                };
-                                                row_values[row_index].push(self.row_entry_to_value(&column_type, entry, exp))
-                                            },
-                                            _ => {
-                                                error("Could not read row from CSV", exp);
-                                                return null_val()
-                                            }
-                                        };
-                                    }
-                                },
-                                _ => {
-                                    error("Could not read CSV row", exp);
-                                }
-                            }
-                        };
-
-                        let row_type = TupleType{tuple_types: schema.iter()
-                            .map(|col| { col.1.clone() })
-                            .collect()};
-                        let list_tuple_value = row_values.iter().map(|lv| {
-                            Value{
-                                value: Val::TupleValue{values: lv.clone()},
-                                val_type: row_type.clone()
-                            }
-                        }).collect();
-
-                        Value{
-                            value: Val::ListValue{values: list_tuple_value},
-                            val_type: ListType{list_type: Box::new(row_type)}
-                        }
-                    },
-                    _ => error("Invalid argument type for \"schema\" in \"readCSV\"", exp)
-                }
-            },
-            _ => error("Invalid argument type for \"path\" in \"readCSV\"", exp)
-        }
-    }
-
-    fn value_to_row_entry(&self, val: &Value) -> String {
-        match val.value.clone() {
-            Val::IntValue{value} => value.to_string(),
-            Val::BoolValue{value} => if value { "true".to_string() } else { "false".to_string() },
-            Val::CharValue{value} => value,
-            Val::StringValue{value} => value,
-            _ => "".to_string()
-        }
-    }
-
-    fn write_csv(&self, args: Vec<Value>, exp: &Exp) -> Value {
-        match &args[0].value {
-            Val::StringValue{value} => {
-                let path = value;
-                match &args[1].value {
-                    Val::ListValue{values} => {
-                        let table = values;
-                        match &args[2].value {
-                            Val::SchemaValue{..} => {
-                                let mut csv_writer = match csv::Writer::from_path(path) {
-                                    Ok(writer) => writer,
-                                    _ => {
-                                        error("Could not open CSV with given path", exp);
-                                        return null_val()
-                                    }
-                                };
-                                for row in table {
-                                    match row.value.clone() {
-                                        Val::TupleValue{values} => {
-                                            let converted_row_values: Vec<String> = values.iter().map(|v| {
-                                                self.value_to_row_entry(v)
-                                            }).collect();
-                                            csv_writer.write_record(&converted_row_values).expect("Could not write row to CSV");
-                                        },
-                                        _ => {}
-                                    }
-                                }
-
-                                null_val()
-                            },
-                            _ => error("Invalid argument type for \"schema\" in \"writeCSV\"", exp)
-                        }
-                    },
-                    _ => error("Invalid argument type for \"table\" in \"writeCSV\"", exp)
-                }
-            },
-            _ => error("Invalid argument type for \"path\" in \"writeCSV\"", exp)
         }
     }
 
@@ -595,6 +491,271 @@ impl Builtin {
                 _ => -1
             }},
             val_type: IntType
+        }
+    }
+
+    fn create_table(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        match &args[0].value {
+            Val::ListValue{values} => {
+                let rows = values.clone();
+                match &args[1].value {
+                    Val::SchemaValue{values} => {
+                        let schema_values = values.clone();
+                        rows.iter().for_each(|value| {
+                            match &value.value {
+                                Val::TupleValue{values} => {
+                                    let tuple_values = values.clone();
+                                    tuple_values.iter().zip(schema_values.iter()).for_each(|sv| {
+                                        type_conforms(&sv.0.val_type, &sv.1.1, &exp.token);
+                                    });
+                                },
+                                _ => {
+                                    error("Invalid row-type for \"createTable\", expects tuple(...)", exp);
+                                }
+                            }
+                        });
+                        Value{
+                            value: Val::TableValue{
+                                schema: Box::new(args[1].clone()),
+                                rows
+                            },
+                            val_type: TableType{schema: Box::new(args[1].val_type.clone())}
+                        }
+                    },
+                    _ => error("Invalid schema for \"createTable\"", exp)
+                }
+            },
+            _ => error("Invalid data-type for \"createTable\"", exp)
+        }
+    }
+
+    fn row_entry_to_value(&self, column_type: &Type, element: &str, exp: &Exp) -> Value {
+        match column_type {
+            IntType => Value{
+                value: Val::IntValue{value: element.parse::<i32>().unwrap()},
+                val_type: IntType
+            },
+            BoolType => Value{
+                value: Val::BoolValue{value:
+                if element == "true" { true }
+                else if element == "false" { false }
+                else {
+                    error("Invalid value for boolean column type", exp);
+                    false
+                }
+                },
+                val_type: BoolType
+            },
+            CharType => Value{
+                value: Val::CharValue{value: element.to_string()},
+                val_type: CharType
+            },
+            StringType => Value{
+                value: Val::StringValue{value: element.to_string()},
+                val_type: StringType
+            },
+            _ => error("Cannot convert value to column type", exp)
+        }
+    }
+
+    fn read_csv(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        match &args[0].value {
+            Val::StringValue{value} => {
+                let path = value;
+                match &args[1].value {
+                    Val::SchemaValue{values} => {
+                        let schema = values;
+                        let csv_reader = csv::ReaderBuilder::new()
+                            .has_headers(true)
+                            .from_path(path);
+                        let mut row_values: Vec<Vec<Value>> = vec![];
+
+                        for (row_index, record) in csv_reader.expect("Could not read CSV").records().enumerate() {
+                            row_values.push(vec![]);
+                            match record {
+                                Ok(row) => {
+                                    for (column_index, entry) in row.iter().enumerate() {
+                                        match row_values.get(row_index) {
+                                            Some(_) => {
+                                                let column_type = match schema.get(column_index) {
+                                                    Some(schema_column) => schema_column.1.clone(),
+                                                    _ => UnknownType
+                                                };
+                                                row_values[row_index].push(self.row_entry_to_value(&column_type, entry, exp))
+                                            },
+                                            _ => {
+                                                error("Could not read row from CSV", exp);
+                                                return null_val()
+                                            }
+                                        };
+                                    }
+                                },
+                                _ => {
+                                    error("Could not read CSV row", exp);
+                                }
+                            }
+                        };
+
+                        let row_type = TupleType{tuple_types: schema.iter()
+                            .map(|col| { col.1.clone() })
+                            .collect()};
+                        let list_tuple_value = row_values.iter().map(|lv| {
+                            Value{
+                                value: Val::TupleValue{values: lv.clone()},
+                                val_type: row_type.clone()
+                            }
+                        }).collect();
+
+                        Value{
+                            value: Val::ListValue{values: list_tuple_value},
+                            val_type: ListType{list_type: Box::new(row_type)}
+                        }
+                    },
+                    _ => error("Invalid argument type for \"schema\" in \"readCSV\"", exp)
+                }
+            },
+            _ => error("Invalid argument type for \"path\" in \"readCSV\"", exp)
+        }
+    }
+
+    fn value_to_row_entry(&self, val: &Value) -> String {
+        match val.value.clone() {
+            Val::IntValue{value} => value.to_string(),
+            Val::BoolValue{value} => if value { "true".to_string() } else { "false".to_string() },
+            Val::CharValue{value} => value,
+            Val::StringValue{value} => value,
+            _ => "".to_string()
+        }
+    }
+
+    fn write_csv(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        match &args[0].value {
+            Val::StringValue{value} => {
+                let path = value;
+                match &args[1].value {
+                    Val::ListValue{values} => {
+                        let table = values;
+                        match &args[2].value {
+                            Val::SchemaValue{..} => {
+                                let mut csv_writer = match csv::Writer::from_path(path) {
+                                    Ok(writer) => writer,
+                                    _ => {
+                                        error("Could not open CSV with given path", exp);
+                                        return null_val()
+                                    }
+                                };
+                                for row in table {
+                                    match row.value.clone() {
+                                        Val::TupleValue{values} => {
+                                            let converted_row_values: Vec<String> = values.iter().map(|v| {
+                                                self.value_to_row_entry(v)
+                                            }).collect();
+                                            csv_writer.write_record(&converted_row_values).expect("Could not write row to CSV");
+                                        },
+                                        _ => {}
+                                    }
+                                }
+
+                                null_val()
+                            },
+                            _ => error("Invalid argument type for \"schema\" in \"writeCSV\"", exp)
+                        }
+                    },
+                    _ => error("Invalid argument type for \"table\" in \"writeCSV\"", exp)
+                }
+            },
+            _ => error("Invalid argument type for \"path\" in \"writeCSV\"", exp)
+        }
+    }
+
+    fn get_column_name_and_index(&self, col_name: &String, schema: &Value, exp: &Exp) -> (i32, String) {
+        match &schema.value {
+            Val::SchemaValue{values} => {
+                let col_index: i32 = match values.iter().position(|sv: &(String, Type)| {
+                    sv.0 == *col_name
+                }) {
+                    Some(col_index) => col_index as i32,
+                    _ => -1
+                };
+                match values.get(col_index as usize) {
+                    Some((name, ..)) => (col_index, name.clone()),
+                    _ => {
+                        error(("Column name ".to_owned() + col_name + " does not exist in table").as_str(), exp);
+                        (-1, "".to_string())
+                    }
+                }
+            },
+            _ => {
+                error("Invalid schema for table in \"collect\"", exp);
+                (-1, "".to_string())
+            }
+        }
+    }
+
+    fn column(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        match &args[0].value {
+            Val::TableValue{schema, rows, ..} => {
+                match &args[1].value {
+                    Val::StringValue{value} => {
+                        let (col_index, _) = self.get_column_name_and_index(value, schema, exp);
+                        let col_values = rows.iter().map(|tuple_value: &Value| {
+                            match &tuple_value.value {
+                                Val::TupleValue{values} => {
+                                    match values.get(col_index as usize) {
+                                        Some(entry) => entry.clone(),
+                                        _ => null_val()
+                                    }
+                                },
+                                _ => null_val()
+                            }
+                        }).collect();
+                        Value{
+                            value: Val::ListValue{values: col_values},
+                            val_type: ListType{list_type: Box::new(match &schema.value{
+                                Val::SchemaValue{values} => values.get(col_index as usize).unwrap().1.clone(),
+                                _ => UnknownType
+                            })}
+                        }
+                    },
+                    _ => error("Invalid column name for table in for \"collect\"", exp)
+                }
+            },
+            _ => error("Invalid table for \"collect\"", exp)
+        }
+    }
+
+    fn collect(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        match &args[0].value {
+            Val::TableValue{rows, ..} => {
+                Value{
+                    value: Val::ListValue{values: rows.clone() },
+                    val_type: ListType{list_type: Box::new(match &args[0].val_type {
+                        TableType{schema} => match *schema.clone() {
+                            SchemaType{col_types} => {
+                                TupleType{tuple_types: col_types.clone()}
+                            },
+                            _ => {
+                                error("Invalid schema for table in \"count\"", exp);
+                                UnknownType
+                            }
+                        },
+                        _ => {
+                            error("Invalid schema for table in \"count\"", exp);
+                            UnknownType
+                        }
+                    })}
+                }
+            },
+            _ => error("Invalid table for \"count\"", exp)
+        }
+    }
+
+    fn count(&self, args: Vec<Value>, exp: &Exp) -> Value {
+        match &args[0].value {
+            Val::TableValue{rows, ..} => {
+                Value{value: Val::IntValue{value: rows.len() as i32 }, val_type: IntType}
+            },
+            _ => error("Invalid table for \"count\"", exp)
         }
     }
 }

@@ -1044,7 +1044,7 @@ impl Parser {
                 TupleType{tuple_types}
             },
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Schema) => {
-                SchemaType{ col_types: vec![] }
+                SchemaType{col_types: vec![]}
             },
             Some(Token::Keyword{..}) if self.match_optional_keyword(Keyword::Table) => {
                 TableType{schema: Box::new(SchemaType{col_types: vec![]})}

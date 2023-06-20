@@ -51,10 +51,6 @@ pub enum Keyword {
     Case,
     #[strum(serialize = "readln")]
     Readln,
-    #[strum(serialize = "readCSV")]
-    ReadCSV,
-    #[strum(serialize = "writeCSV")]
-    WriteCSV,
     #[strum(serialize = "print")]
     Print,
     #[strum(serialize = "println")]
@@ -80,7 +76,19 @@ pub enum Keyword {
     #[strum(serialize = "intToString")]
     IntToString,
     #[strum(serialize = "stringToInt")]
-    StringToInt
+    StringToInt,
+    #[strum(serialize = "createTable")] // TABLE FUNCTIONS
+    CreateTable,
+    #[strum(serialize = "readCSV")]
+    ReadCSV,
+    #[strum(serialize = "writeCSV")]
+    WriteCSV,
+    #[strum(serialize = "column")]
+    Column,
+    #[strum(serialize = "collect")]
+    Collect,
+    #[strum(serialize = "count")]
+    Count,
 }
 
 impl Keyword {
@@ -96,8 +104,6 @@ impl Keyword {
     pub fn is_builtin_function(&self) -> bool {
         match *self {
             Keyword::Readln |
-            Keyword::ReadCSV |
-            Keyword::WriteCSV |
             Keyword::Print |
             Keyword::Println |
             Keyword::Map |
@@ -110,7 +116,13 @@ impl Keyword {
             Keyword::Len |
             Keyword::Type |
             Keyword::IntToString |
-            Keyword::StringToInt
+            Keyword::StringToInt |
+            Keyword::CreateTable |
+            Keyword::ReadCSV |
+            Keyword::WriteCSV |
+            Keyword::Column |
+            Keyword::Collect |
+            Keyword::Count
             => true,
             _ => false
         }

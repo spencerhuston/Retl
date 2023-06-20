@@ -142,6 +142,9 @@ fn _type_conforms(t1: &Type, t2: &Type, token: &Token) -> Type {
                 });
                 t1.clone()
             }
+        },
+        (Type::TableType{schema: schema1}, Type::TableType{schema: schema2}) => {
+            _type_conforms(&schema1, &schema2, token)
         }
         (_, Type::UnknownType) => well_formed(t1),
         (Type::UnknownType, _) => well_formed(t2),

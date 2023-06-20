@@ -24,6 +24,7 @@ pub enum Val {
     TupleValue{values: Vec<Value>},
     DictValue{values: Vec<(Value, Value)>},
     SchemaValue{values: Vec<(String, Type)>},
+    TableValue{schema: Box<Value>, rows: Vec<Value>}, // Schema should be SchemaValue, rows should be List of Tuple
     FuncValue{
         builtin_ident: Option<Keyword>,
         parameters: Vec<(String, Type)>,

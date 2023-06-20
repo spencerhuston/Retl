@@ -13,13 +13,13 @@ TABLE-TYPE:
 - rows: list[tuple(...)]
 - funcs w/ table-types:
     - createTable(data: list[tuple(...)], s: schema) -> table
-    - writeCSV(path: string, table: table, s: schema, header)
+    - writeCSV(path: string, tbl: table, s: schema, header)
     - readCSV(path: string, s: schema, header) -> table
-    - join(table1, table2, ??????) -> table: Inner join two tables
+    - join(table1, table2, func[] -> bool) -> table: Inner join two tables, can reference columns via __[table name]_[column name]
     - with(table, col: name, values: list[any]) -> table:
         Add column "name" with values, type is inferred, if used with existing column it replaces that one
     - where(table, col: name, func[] -> bool) -> table:
-        Filter rows out with condition, can reference individual values per row via __[table name]_[column name]
+        Filter rows out with condition, can reference columns via __[table name]_[column name]
     - select(table, cols: list[string]) -> table: Select columns
     - drop(table, col: string) -> table: Remove column from table
     - column(table, name: string) -> list[any]: Returns column as list of values
@@ -73,16 +73,16 @@ General:
     - stringToInt
 Table:
     - createTable(data: list[tuple(...)], s: schema) -> table
-    - writeCSV(path: string, table: table, s: schema, header)
-    - readCSV(path: string, s: schema, header) -> table
-    - join(table1, table2, ??????) -> table: Inner join two tables
-    - with(table, col: name, values: list[any]) -> table:
+    - writeCSV(path: string, table: table, s: schema, header) (TODO)
+    - readCSV(path: string, s: schema, header) -> table (TODO)
+    - join(table1, table2, func[] -> bool) -> table: Inner join two tables (TODO)
+    - with(table, col: name, values: list[any]) -> table: (TODO)
         Add column "name" with values, type is inferred, if used with existing column it replaces that one
-    - where(table, col: name, func[] -> bool) -> table:
+    - where(table, col: name, func[] -> bool) -> table: (TODO)
         Filter rows out with condition, can reference individual values per row via __[table name]_[column name]
-    - select(table, cols: list[string]) -> table: Select columns
-    - drop(table, col: string) -> table: Remove column from table
-    - column(table, name: string) -> list[any]: Returns column as list of values
+    - select(table, cols: list[string]) -> table: Select columns (TODO)
+    - drop(table, col: string) -> table: Remove column from table (TODO)
+    - column(table, name: string) -> list[any]: Returns column as list of values (TODO)
     - collect(table) -> list[tuple(...)]: returns list of table rows
     - count(table) -> int: Row count
 7. collection operators

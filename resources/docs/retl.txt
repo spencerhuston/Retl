@@ -1,6 +1,5 @@
 TODO:
 - **Table type**
-- Add iterator variable name: "for x in y"
 - Immediately return after error (w/o panic!)
 - Print collection types
 

@@ -52,12 +52,73 @@ pub struct Builtin {
     builtins: HashMap<String, BuiltinMeta>
 }
 
-fn value_to_string(val: &Val) -> Option<String> { // TODO - Collection types
+fn value_list_as_string(values: &Vec<Value>) -> String {
+    let mut value_str = String::from("");
+
+    if values.is_empty() { return "".to_string() }
+
+    for i in 0..values.len() - 1 {
+        match value_to_string(&values[i].value.clone()) {
+            Some(value_string) => value_str.push_str(&*(value_string + ",")),
+            _ => {}
+        }
+    }
+
+    match value_to_string(&values.last().unwrap().value.clone()) {
+        Some(value_string) => {
+            value_str.push_str(&*(value_string));
+            value_str
+        },
+        _ => "".to_string()
+    }
+}
+
+fn value_to_string(val: &Val) -> Option<String> {
     match val {
         Val::IntValue{value} => Some(value.to_string()),
         Val::BoolValue{value} => Some(if *value { "true".to_string() } else { "false".to_string() }),
         Val::CharValue{value} => Some(value.to_string()),
         Val::StringValue{value} => Some(value.clone()),
+        Val::NullValue => Some("null".to_string()),
+        Val::ListValue{values} => {
+            Some("[".to_owned() + &*value_list_as_string(values) + "]")
+        },
+        Val::TupleValue{values} => {
+            Some("(".to_owned() + &*value_list_as_string(values) + ")")
+        },
+        Val::DictValue{values} => {
+            let mut value_str = String::from("");
+
+            if values.is_empty() { return None }
+
+            for i in 0..values.len() - 1 {
+                match value_to_string(&values[i].0.value.clone()) {
+                    Some(key_value_string) => {
+                        match value_to_string(&values[i].1.value.clone()) {
+                            Some(value_string) => {
+                                value_str.push_str(&*(key_value_string + ": " + &*value_string + ", "))
+                            },
+                            _ => {}
+                        }
+                    },
+                    _ => {}
+                }
+            }
+
+            let last_dict_pair = &values.last().unwrap();
+            match value_to_string(&last_dict_pair.0.value.clone()) {
+                Some(key_value_string) => {
+                    match value_to_string(&last_dict_pair.1.value.clone()) {
+                        Some(value_string) => {
+                            value_str.push_str(&*(key_value_string + ": " + &*value_string))
+                        },
+                        _ => {}
+                    }
+                },
+                _ => {}
+            }
+            Some("[".to_owned() + &*value_str + "]")
+        },
         _ => None
     }
 }

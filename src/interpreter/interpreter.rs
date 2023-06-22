@@ -43,7 +43,7 @@ impl Interpreter {
             Expression::Primitive{..} => self.interpret_primitive(&exp, env, expected_type),
             Expression::Reference{..} => self.interpret_reference(&exp, env, expected_type),
             Expression::Branch{..} => self.interpret_branch(&exp, env, expected_type),
-            Expression::Iter{..} => self.interpret_iter(&exp, env, expected_type),
+            Expression::For{..} => self.interpret_for(&exp, env, expected_type),
             Expression::ListDef{..} => self.interpret_list_def(&exp, env, expected_type),
             Expression::TupleDef{..} => self.interpret_tuple_def(&exp, env, expected_type),
             Expression::TupleAccess{..} => self.interpret_tuple_access(&exp, env, expected_type),
@@ -391,16 +391,16 @@ impl Interpreter {
         }
     }
 
-    fn interpret_iter(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
-        trace!("interpret_iter: {:?}", exp);
+    fn interpret_for(&mut self, exp: &Exp, env: &mut Env, expected_type: &Type) -> Value {
+        trace!("interpret_for: {:?}", exp);
         match &exp.exp {
-            Expression::Iter{iter, iter_exp } => {
-                let iterator_size = self.get_iter_size(iter, env);
+            Expression::For{ref_name, collection, iter_exp } => {
+                let iterator_size = self.get_iter_size(collection, env);
                 let mut index: usize = 0;
                 while index < iterator_size {
-                    let iter_element = self.get_iter_element(index, iter, env);
+                    let iter_element = self.get_iter_element(index, collection, env);
                     let mut iter_env = env.clone();
-                    iter_env.insert("__elem".to_string(), iter_element);
+                    iter_env.insert(ref_name.clone(), iter_element);
                     self.interpret(&iter_exp, &mut iter_env, expected_type);
                     index += 1;
                 };

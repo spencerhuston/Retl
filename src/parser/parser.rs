@@ -318,8 +318,8 @@ impl Parser {
                 if self.match_optional_keyword(Keyword::If)
                     => self.parse_branch(),
             Some(Token::Keyword{..})
-                if self.match_optional_keyword(Keyword::Iter)
-                    => self.parse_iter(),
+                if self.match_optional_keyword(Keyword::For)
+                    => self.parse_for(),
             Some(Token::Delimiter{..})
                 if self.match_optional_delimiter(Delimiter::BracketLeft) => {
                 let first_collection = self.parse_collection_def();
@@ -685,19 +685,20 @@ impl Parser {
         }
     }
 
-    fn parse_iter(&mut self) -> Exp {
-        trace!("parse_iter");
+    fn parse_for(&mut self) -> Exp {
+        trace!("parse_for");
         let token = self.curr().unwrap();
-        self.match_required_delimiter(Delimiter::ParenLeft);
-        let iter = self.parse_simple_expression();
-        self.match_required_delimiter(Delimiter::ParenRight);
+        let element_ref = self.match_ident();
+        self.match_required_keyword(Keyword::In);
+        let collection = self.parse_simple_expression();
         self.match_required_delimiter(Delimiter::BraceLeft);
         let iter_exp = self.parse_expression();
         self.match_required_delimiter(Delimiter::BraceRight);
 
         Exp{
-            exp: Expression::Iter{
-                iter: Box::new(iter),
+            exp: Expression::For{
+                ref_name: element_ref,
+                collection: Box::new(collection),
                 iter_exp: Box::new(iter_exp)
             },
             exp_type: NullType,

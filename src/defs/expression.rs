@@ -53,7 +53,7 @@ pub enum Expression {
     Primitive{operator: Operator, left: Box<Exp>, right: Box<Exp>},
     Reference{ident: String},
     Branch{condition: Box<Exp>, if_branch: Box<Exp>, else_branch: Box<Option<Exp>>},
-    Iter{iter: Box<Exp>, iter_exp: Box<Exp>},
+    For{ref_name: String, collection: Box<Exp>, iter_exp: Box<Exp>},
     ListDef{values: Vec<Exp>},
     TupleDef{values: Vec<Exp>},
     TupleAccess{ident: Box<Exp>, index: usize},

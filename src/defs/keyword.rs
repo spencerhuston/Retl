@@ -43,8 +43,10 @@ pub enum Keyword {
     If,
     #[strum(serialize = "else")]
     Else,
-    #[strum(serialize = "iter")]
-    Iter,
+    #[strum(serialize = "for")]
+    For,
+    #[strum(serialize = "in")]
+    In,
     #[strum(serialize = "match")]
     Match,
     #[strum(serialize = "case")]

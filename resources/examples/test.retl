@@ -3,10 +3,10 @@ let t: table = createTable(
         ("hello", true, 0),
         ("world", false, 1),
         ("test", true, 2),
-        ("test2", true)
+        ("test2", true, 3)
     ],
     ${col1: string, col2: bool, col3: int});
 
-iter (column(t, "col3")) {
-    println(__elem)
+for val in column(t, "col3") {
+    println(val)
 }
